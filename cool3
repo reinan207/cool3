@@ -1,81 +1,95 @@
-local ver = "v0.3.4" -- loadstring(game:HttpGet("https://raw.githubusercontent.com/LeviTheOtaku/roblox-scripts/main/FTFHAX.lua",true))()
+local ver = "v0.3.5"
 
+-- ================================================
+-- SPEED HACK STATE (funciona com ou sem abrir o menu)
+-- ================================================
+local speed = 41
+local speedEnabled = false
+local speedConnection = nil
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local function applySpeed()
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.WalkSpeed = speedEnabled and speed or 16
+    end
+end
+
+local function updateSpeed()
+    if speedConnection then
+        speedConnection:Disconnect()
+        speedConnection = nil
+    end
+    if speedEnabled then
+        applySpeed()
+        speedConnection = RunService.Heartbeat:Connect(function()
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.WalkSpeed = speed
+            end
+        end)
+    else
+        applySpeed()
+    end
+end
+
+-- Hotkey T (funciona sem abrir o menu)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.T then
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            speedEnabled = not speedEnabled
+            updateSpeed()
+            -- refreshSpeedUI é chamado depois que os elementos existem
+            if SpeedLabel then
+                SpeedLabel.Text = "Speed: " .. speed .. (speedEnabled and " (ON)" or " (OFF)")
+            end
+            if SpeedToggleButton then
+                SpeedToggleButton.Text = speedEnabled and "On" or "Off"
+                SpeedToggleButton.BackgroundColor3 = speedEnabled and Color3.new(0, 0.7, 0) or Color3.new(0.3, 0.3, 0.3)
+            end
+            if SpeedButton then
+                SpeedButton.BackgroundColor3 = speedEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+            end
+        end
+    end
+end)
+
+-- Reconecta ao respawnar
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+    wait(1)
+    updateSpeed()
+end)
+
+-- ================================================
+-- GUI
+-- ================================================
 local FTFHAX = Instance.new("ScreenGui")
 FTFHAX.IgnoreGuiInset = true
 FTFHAX.DisplayOrder = 1000
-local MenusTabFrame = Instance.new("Frame")
-local CheatButton = Instance.new("ImageButton")
-local TextLabel = Instance.new("TextLabel")
-local ESPMenuWindow = Instance.new("Frame")
-local Body = Instance.new("Frame")
-local TitleLabel = Instance.new("TextLabel")
-local ButtonsFrame = Instance.new("Frame")
-local BestPCESPButton = Instance.new("TextButton")
-local PCESPButton = Instance.new("TextButton")
-local TbdButton = Instance.new("TextButton")
-local PlayerESPButton = Instance.new("TextButton")
-local PodsESPButton = Instance.new("TextButton")
-local ExitsESPButton = Instance.new("TextButton")
-local UIGridLayout = Instance.new("UIGridLayout")
-local TopBar = Instance.new("Frame")
-local CloseButton = Instance.new("TextButton")
-local BackButton = Instance.new("TextButton")
-local CreditTotalText = Instance.new("TextLabel")
-local PageTitleText = Instance.new("TextLabel")
-local MainMenuWindow = Instance.new("Frame")
-local TopBar_2 = Instance.new("Frame")
-local CloseButton_2 = Instance.new("TextButton")
-local CreditTotalText_2 = Instance.new("TextLabel")
-local PageTitleText_2 = Instance.new("TextLabel")
-local Body_2 = Instance.new("Frame")
-local UIGridLayout_2 = Instance.new("UIGridLayout")
-local ESPButton = Instance.new("ImageButton")
-local BottomText = Instance.new("TextLabel")
-local TempIcon = Instance.new("ImageLabel")
-local ToolsButton = Instance.new("ImageButton")
-local BottomText_2 = Instance.new("TextLabel")
-local TempIcon_2 = Instance.new("ImageLabel")
-local ToolsMenuWindow = Instance.new("Frame")
-local Body_3 = Instance.new("Frame")
-local TitleLabel_2 = Instance.new("TextLabel")
-local ButtonsFrame_2 = Instance.new("Frame")
-local UIGridLayout_3 = Instance.new("UIGridLayout")
-local NeverFailButton = Instance.new("TextButton")
-local AutoPlayButton = Instance.new("TextButton")
-local AutoInteractButton = Instance.new("TextButton")
-local BeastCamButton = Instance.new("TextButton")
-local TopBar_3 = Instance.new("Frame")
-local CloseButton_3 = Instance.new("TextButton")
-local BackButton_2 = Instance.new("TextButton")
-local CreditTotalText_3 = Instance.new("TextLabel")
-local PageTitleText_3 = Instance.new("TextLabel")
-local ViewportFrame = Instance.new("ViewportFrame")
-
-FTFHAX.Name = "FTFHAX"
 FTFHAX.ResetOnSpawn = false
-FTFHAX.IgnoreGuiInset = true
-FTFHAX.DisplayOrder = 1000
+FTFHAX.Name = "FTFHAX"
+pcall(function() FTFHAX.Parent = game:GetService("CoreGui") end)
 
-pcall(function()
-	FTFHAX.Parent = game:GetService("CoreGui")
-end)
-
+-- MenusTabFrame
+local MenusTabFrame = Instance.new("Frame")
 MenusTabFrame.Name = "MenusTabFrame"
 MenusTabFrame.Parent = FTFHAX
 MenusTabFrame.AnchorPoint = Vector2.new(1, 0.5)
 MenusTabFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MenusTabFrame.BackgroundTransparency = 1.000
-MenusTabFrame.BorderColor3 = Color3.fromRGB(63, 63, 63)
+MenusTabFrame.BackgroundTransparency = 1
 MenusTabFrame.BorderSizePixel = 0
 MenusTabFrame.Position = UDim2.new(1, 0, 0.5, 0)
-MenusTabFrame.Size = UDim2.new(0.0799999982, 0, 0.159999996, 0)
+MenusTabFrame.Size = UDim2.new(0.08, 0, 0.16, 0)
 MenusTabFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
 
+local CheatButton = Instance.new("ImageButton")
 CheatButton.Name = "CheatButton"
 CheatButton.Parent = MenusTabFrame
 CheatButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-CheatButton.BackgroundTransparency = 0.500
-CheatButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CheatButton.BackgroundTransparency = 0.5
 CheatButton.BorderSizePixel = 0
 CheatButton.Position = UDim2.new(0, 0, 1, 0)
 CheatButton.Size = UDim2.new(1, 0, 1, 0)
@@ -83,26 +97,154 @@ CheatButton.SizeConstraint = Enum.SizeConstraint.RelativeXX
 CheatButton.Image = "rbxassetid://11570895459"
 CheatButton.ImageColor3 = Color3.fromRGB(223, 223, 223)
 
+local TextLabel = Instance.new("TextLabel")
 TextLabel.Parent = CheatButton
 TextLabel.AnchorPoint = Vector2.new(0, 1)
-TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundTransparency = 1.000
+TextLabel.BackgroundTransparency = 1
 TextLabel.Position = UDim2.new(0, 0, 1, 0)
-TextLabel.Size = UDim2.new(1, 0, 0.200000003, 0)
+TextLabel.Size = UDim2.new(1, 0, 0.2, 0)
 TextLabel.Font = Enum.Font.ArialBold
 TextLabel.Text = "ftfhax"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.TextScaled = true
-TextLabel.TextSize = 12.000
-TextLabel.TextStrokeTransparency = 0.000
+TextLabel.TextStrokeTransparency = 0
 TextLabel.TextWrapped = true
 TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
 
+-- ================================================
+-- MAIN MENU WINDOW
+-- ================================================
+local MainMenuWindow = Instance.new("Frame")
+MainMenuWindow.Name = "MainMenuWindow"
+MainMenuWindow.Parent = FTFHAX
+MainMenuWindow.AnchorPoint = Vector2.new(0.5, 0.5)
+MainMenuWindow.BackgroundColor3 = Color3.fromRGB(47, 47, 47)
+MainMenuWindow.BorderSizePixel = 2
+MainMenuWindow.ClipsDescendants = true
+MainMenuWindow.Position = UDim2.new(0.5, 0, 0.5, -18)
+MainMenuWindow.Size = UDim2.new(0, 420, 0, 320)
+MainMenuWindow.SizeConstraint = Enum.SizeConstraint.RelativeYY
+MainMenuWindow.Visible = false
+
+local TopBar_2 = Instance.new("Frame")
+TopBar_2.Name = "TopBar"
+TopBar_2.Parent = MainMenuWindow
+TopBar_2.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+TopBar_2.BorderSizePixel = 0
+TopBar_2.Size = UDim2.new(1, 0, 0, 40)
+TopBar_2.ZIndex = 5
+
+local CloseButton_2 = Instance.new("TextButton")
+CloseButton_2.Name = "CloseButton"
+CloseButton_2.Parent = TopBar_2
+CloseButton_2.AnchorPoint = Vector2.new(1, 0)
+CloseButton_2.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton_2.BorderSizePixel = 0
+CloseButton_2.Position = UDim2.new(1, -1, 0, 1)
+CloseButton_2.Size = UDim2.new(0, 36, 0, 36)
+CloseButton_2.SizeConstraint = Enum.SizeConstraint.RelativeYY
+CloseButton_2.ZIndex = 5
+CloseButton_2.Text = "X"
+CloseButton_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton_2.TextScaled = true
+
+local CreditTotalText_2 = Instance.new("TextLabel")
+CreditTotalText_2.Parent = TopBar_2
+CreditTotalText_2.AnchorPoint = Vector2.new(1, 0)
+CreditTotalText_2.BackgroundTransparency = 1
+CreditTotalText_2.Position = UDim2.new(1, -111, 0, 0)
+CreditTotalText_2.Size = UDim2.new(0, 120, 1, 0)
+CreditTotalText_2.ZIndex = 5
+CreditTotalText_2.Text = ver
+CreditTotalText_2.TextColor3 = Color3.fromRGB(255, 255, 0)
+CreditTotalText_2.TextScaled = true
+CreditTotalText_2.TextXAlignment = Enum.TextXAlignment.Right
+
+local PageTitleText_2 = Instance.new("TextLabel")
+PageTitleText_2.Parent = TopBar_2
+PageTitleText_2.BackgroundTransparency = 1
+PageTitleText_2.Position = UDim2.new(0, 10, 0, 0)
+PageTitleText_2.Size = UDim2.new(0.5, 0, 0, 40)
+PageTitleText_2.ZIndex = 5
+PageTitleText_2.Text = "ftfhax"
+PageTitleText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+PageTitleText_2.TextScaled = true
+PageTitleText_2.TextXAlignment = Enum.TextXAlignment.Left
+
+local Body_2 = Instance.new("Frame")
+Body_2.Name = "Body"
+Body_2.Parent = MainMenuWindow
+Body_2.AnchorPoint = Vector2.new(0.5, 0)
+Body_2.BackgroundTransparency = 1
+Body_2.BorderSizePixel = 0
+Body_2.Position = UDim2.new(0.5, 0, 0, 45)
+Body_2.Size = UDim2.new(1, -10, 1, -50)
+
+local UIGridLayout_2 = Instance.new("UIGridLayout")
+UIGridLayout_2.Parent = Body_2
+UIGridLayout_2.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIGridLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
+UIGridLayout_2.VerticalAlignment = Enum.VerticalAlignment.Center
+UIGridLayout_2.CellSize = UDim2.new(0, 132, 0, 132)
+
+local ESPButton = Instance.new("ImageButton")
+ESPButton.Name = "ESPButton"
+ESPButton.Parent = Body_2
+ESPButton.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
+ESPButton.BorderSizePixel = 0
+ESPButton.LayoutOrder = 1
+ESPButton.Size = UDim2.new(0, 100, 0, 100)
+
+local BottomText = Instance.new("TextLabel")
+BottomText.Parent = ESPButton
+BottomText.BackgroundTransparency = 1
+BottomText.Position = UDim2.new(0, 0, 0.8, 0)
+BottomText.Size = UDim2.new(1, 0, 0.2, 0)
+BottomText.Text = "ESP"
+BottomText.TextColor3 = Color3.fromRGB(255, 255, 255)
+BottomText.TextScaled = true
+
+local TempIcon = Instance.new("ImageLabel")
+TempIcon.Parent = ESPButton
+TempIcon.AnchorPoint = Vector2.new(0.5, 0)
+TempIcon.BackgroundTransparency = 1
+TempIcon.Position = UDim2.new(0.5, 0, 0, 0)
+TempIcon.Size = UDim2.new(0.8, 0, 0.8, 0)
+TempIcon.Image = "rbxassetid://2594274683"
+
+local ToolsButton = Instance.new("ImageButton")
+ToolsButton.Name = "ToolsButton"
+ToolsButton.Parent = Body_2
+ToolsButton.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
+ToolsButton.BorderSizePixel = 0
+ToolsButton.LayoutOrder = 2
+ToolsButton.Size = UDim2.new(0, 100, 0, 100)
+
+local BottomText_2 = Instance.new("TextLabel")
+BottomText_2.Parent = ToolsButton
+BottomText_2.BackgroundTransparency = 1
+BottomText_2.Position = UDim2.new(0, 0, 0.8, 0)
+BottomText_2.Size = UDim2.new(1, 0, 0.2, 0)
+BottomText_2.Text = "Tools"
+BottomText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+BottomText_2.TextScaled = true
+
+local TempIcon_2 = Instance.new("ImageLabel")
+TempIcon_2.Parent = ToolsButton
+TempIcon_2.AnchorPoint = Vector2.new(0.5, 0)
+TempIcon_2.BackgroundTransparency = 1
+TempIcon_2.Position = UDim2.new(0.5, 0, 0, 0)
+TempIcon_2.Size = UDim2.new(0.8, 0, 0.8, 0)
+TempIcon_2.Image = "rbxassetid://12403104094"
+
+-- ================================================
+-- ESP MENU WINDOW
+-- ================================================
+local ESPMenuWindow = Instance.new("Frame")
 ESPMenuWindow.Name = "ESPMenuWindow"
 ESPMenuWindow.Parent = FTFHAX
 ESPMenuWindow.AnchorPoint = Vector2.new(0.5, 0.5)
 ESPMenuWindow.BackgroundColor3 = Color3.fromRGB(47, 47, 47)
-ESPMenuWindow.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ESPMenuWindow.BorderSizePixel = 2
 ESPMenuWindow.ClipsDescendants = true
 ESPMenuWindow.Position = UDim2.new(0.5, 0, 0.5, -18)
@@ -110,113 +252,33 @@ ESPMenuWindow.Size = UDim2.new(0, 480, 0, 175)
 ESPMenuWindow.SizeConstraint = Enum.SizeConstraint.RelativeYY
 ESPMenuWindow.Visible = false
 
+local Body = Instance.new("Frame")
 Body.Name = "Body"
 Body.Parent = ESPMenuWindow
-Body.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Body.BackgroundTransparency = 1.000
+Body.BackgroundTransparency = 1
 Body.BorderSizePixel = 0
 Body.Position = UDim2.new(0, 0, 0, 40)
 Body.Size = UDim2.new(1, 0, 1, -40)
 
-TitleLabel.Name = "TitleLabel"
+local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Parent = Body
 TitleLabel.AnchorPoint = Vector2.new(0.5, 0)
 TitleLabel.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
-TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TitleLabel.BorderSizePixel = 0
-TitleLabel.Position = UDim2.new(0.5, 0, -1.06500006, 150)
-TitleLabel.Size = UDim2.new(1, -10, 0.0235044118, 30)
+TitleLabel.Position = UDim2.new(0.5, 0, -1.065, 150)
+TitleLabel.Size = UDim2.new(1, -10, 0.0235, 30)
 TitleLabel.Text = "ESP"
 TitleLabel.TextColor3 = Color3.fromRGB(149, 255, 237)
 TitleLabel.TextScaled = true
-TitleLabel.TextSize = 14.000
-TitleLabel.TextWrapped = true
 
+local ButtonsFrame = Instance.new("Frame")
 ButtonsFrame.Name = "ButtonsFrame"
 ButtonsFrame.Parent = Body
-ButtonsFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ButtonsFrame.BackgroundTransparency = 1.000
+ButtonsFrame.BackgroundTransparency = 1
 ButtonsFrame.Position = UDim2.new(0, 5, 0, 45)
-ButtonsFrame.Size = UDim2.new(1, -10, -0.00555555569, 85)
+ButtonsFrame.Size = UDim2.new(1, -10, -0.00555, 85)
 
-BestPCESPButton.Name = "BestPCESPButton"
-BestPCESPButton.Parent = ButtonsFrame
-BestPCESPButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-BestPCESPButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-BestPCESPButton.BorderSizePixel = 0
-BestPCESPButton.LayoutOrder = 4
-BestPCESPButton.Size = UDim2.new(0, 200, 0, 50)
-BestPCESPButton.Text = "Best PC"
-BestPCESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-BestPCESPButton.TextScaled = true
-BestPCESPButton.TextSize = 14.000
-BestPCESPButton.TextWrapped = true
-
-PCESPButton.Name = "PCESPButton"
-PCESPButton.Parent = ButtonsFrame
-PCESPButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-PCESPButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-PCESPButton.BorderSizePixel = 0
-PCESPButton.Size = UDim2.new(0, 200, 0, 50)
-PCESPButton.Text = "PC"
-PCESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-PCESPButton.TextScaled = true
-PCESPButton.TextSize = 14.000
-PCESPButton.TextWrapped = true
-
-TbdButton.Name = "TbdButton"
-TbdButton.Parent = ButtonsFrame
-TbdButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-TbdButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-TbdButton.BorderSizePixel = 0
-TbdButton.LayoutOrder = 5
-TbdButton.Size = UDim2.new(0, 200, 0, 50)
-TbdButton.Visible = false
-TbdButton.Text = "nothing"
-TbdButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-TbdButton.TextScaled = true
-TbdButton.TextSize = 14.000
-TbdButton.TextWrapped = true
-
-PlayerESPButton.Name = "PlayerESPButton"
-PlayerESPButton.Parent = ButtonsFrame
-PlayerESPButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-PlayerESPButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-PlayerESPButton.BorderSizePixel = 0
-PlayerESPButton.LayoutOrder = 1
-PlayerESPButton.Size = UDim2.new(0, 200, 0, 50)
-PlayerESPButton.Text = "Player"
-PlayerESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-PlayerESPButton.TextScaled = true
-PlayerESPButton.TextSize = 14.000
-PlayerESPButton.TextWrapped = true
-
-PodsESPButton.Name = "PodsESPButton"
-PodsESPButton.Parent = ButtonsFrame
-PodsESPButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-PodsESPButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-PodsESPButton.BorderSizePixel = 0
-PodsESPButton.LayoutOrder = 2
-PodsESPButton.Size = UDim2.new(0, 200, 0, 50)
-PodsESPButton.Text = "Pods"
-PodsESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-PodsESPButton.TextScaled = true
-PodsESPButton.TextSize = 14.000
-PodsESPButton.TextWrapped = true
-
-ExitsESPButton.Name = "ExitsESPButton"
-ExitsESPButton.Parent = ButtonsFrame
-ExitsESPButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-ExitsESPButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ExitsESPButton.BorderSizePixel = 0
-ExitsESPButton.LayoutOrder = 3
-ExitsESPButton.Size = UDim2.new(0, 200, 0, 50)
-ExitsESPButton.Text = "Exits"
-ExitsESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ExitsESPButton.TextScaled = true
-ExitsESPButton.TextSize = 14.000
-ExitsESPButton.TextWrapped = true
-
+local UIGridLayout = Instance.new("UIGridLayout")
 UIGridLayout.Parent = ButtonsFrame
 UIGridLayout.FillDirection = Enum.FillDirection.Vertical
 UIGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -224,6 +286,27 @@ UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIGridLayout.CellPadding = UDim2.new(0, 6, 0, 6)
 UIGridLayout.CellSize = UDim2.new(0, 152, 0, 39)
 
+local function makeESPBtn(name, text, order)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Parent = ButtonsFrame
+    b.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
+    b.BorderSizePixel = 0
+    b.LayoutOrder = order
+    b.Size = UDim2.new(0, 200, 0, 50)
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.TextScaled = true
+    return b
+end
+
+local PlayerESPButton  = makeESPBtn("PlayerESPButton",  "Player",   1)
+local PodsESPButton    = makeESPBtn("PodsESPButton",    "Pods",     2)
+local ExitsESPButton   = makeESPBtn("ExitsESPButton",   "Exits",    3)
+local PCESPButton      = makeESPBtn("PCESPButton",      "PC",       0)
+local BestPCESPButton  = makeESPBtn("BestPCESPButton",  "Best PC",  4)
+
+local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
 TopBar.Parent = ESPMenuWindow
 TopBar.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
@@ -231,28 +314,23 @@ TopBar.BorderSizePixel = 0
 TopBar.Size = UDim2.new(1, 0, 0, 40)
 TopBar.ZIndex = 5
 
-CloseButton.Name = "CloseButton"
+local CloseButton = Instance.new("TextButton")
 CloseButton.Parent = TopBar
 CloseButton.AnchorPoint = Vector2.new(1, 0)
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-CloseButton.BorderColor3 = Color3.fromRGB(191, 191, 191)
 CloseButton.BorderSizePixel = 0
 CloseButton.Position = UDim2.new(1, -1, 0, 1)
 CloseButton.Size = UDim2.new(0, 36, 0, 36)
 CloseButton.SizeConstraint = Enum.SizeConstraint.RelativeYY
 CloseButton.ZIndex = 5
-CloseButton.Modal = true
 CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.TextScaled = true
-CloseButton.TextSize = 14.000
-CloseButton.TextWrapped = true
 
-BackButton.Name = "BackButton"
+local BackButton = Instance.new("TextButton")
 BackButton.Parent = TopBar
 BackButton.AnchorPoint = Vector2.new(1, 0)
 BackButton.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-BackButton.BorderColor3 = Color3.fromRGB(191, 191, 191)
 BackButton.BorderSizePixel = 0
 BackButton.Position = UDim2.new(1, -41, 0, 1)
 BackButton.Size = UDim2.new(1, -4, 1, -4)
@@ -261,187 +339,38 @@ BackButton.ZIndex = 5
 BackButton.Text = "<"
 BackButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 BackButton.TextScaled = true
-BackButton.TextSize = 14.000
-BackButton.TextWrapped = true
 
-CreditTotalText.Name = "CreditTotalText"
+local CreditTotalText = Instance.new("TextLabel")
 CreditTotalText.Parent = TopBar
 CreditTotalText.AnchorPoint = Vector2.new(1, 0)
-CreditTotalText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CreditTotalText.BackgroundTransparency = 1.000
-CreditTotalText.BorderSizePixel = 0
+CreditTotalText.BackgroundTransparency = 1
 CreditTotalText.Position = UDim2.new(1, -111, 0, 0)
 CreditTotalText.Size = UDim2.new(0, 120, 1, 0)
 CreditTotalText.ZIndex = 5
 CreditTotalText.Text = ver
 CreditTotalText.TextColor3 = Color3.fromRGB(255, 255, 0)
 CreditTotalText.TextScaled = true
-CreditTotalText.TextSize = 34.000
-CreditTotalText.TextWrapped = true
 CreditTotalText.TextXAlignment = Enum.TextXAlignment.Right
 
-PageTitleText.Name = "PageTitleText"
+local PageTitleText = Instance.new("TextLabel")
 PageTitleText.Parent = TopBar
-PageTitleText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-PageTitleText.BackgroundTransparency = 1.000
-PageTitleText.BorderSizePixel = 0
+PageTitleText.BackgroundTransparency = 1
 PageTitleText.Position = UDim2.new(0, 10, 0, 0)
 PageTitleText.Size = UDim2.new(0.5, 0, 0, 40)
 PageTitleText.ZIndex = 5
 PageTitleText.Text = "ftfhax"
 PageTitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 PageTitleText.TextScaled = true
-PageTitleText.TextSize = 34.000
-PageTitleText.TextWrapped = true
 PageTitleText.TextXAlignment = Enum.TextXAlignment.Left
 
-MainMenuWindow.Name = "MainMenuWindow"
-MainMenuWindow.Parent = FTFHAX
-MainMenuWindow.AnchorPoint = Vector2.new(0.5, 0.5)
-MainMenuWindow.BackgroundColor3 = Color3.fromRGB(47, 47, 47)
-MainMenuWindow.BorderColor3 = Color3.fromRGB(0, 0, 0)
-MainMenuWindow.BorderSizePixel = 2
-MainMenuWindow.ClipsDescendants = true
-MainMenuWindow.Position = UDim2.new(0.5, 0, 0.5, -18)
-MainMenuWindow.Size = UDim2.new(0, 420, 0, 320)
-MainMenuWindow.SizeConstraint = Enum.SizeConstraint.RelativeYY
-MainMenuWindow.Visible = false
-
-TopBar_2.Name = "TopBar"
-TopBar_2.Parent = MainMenuWindow
-TopBar_2.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
-TopBar_2.BorderSizePixel = 0
-TopBar_2.Size = UDim2.new(1, 0, 0, 40)
-TopBar_2.ZIndex = 5
-
-CloseButton_2.Name = "CloseButton"
-CloseButton_2.Parent = TopBar_2
-CloseButton_2.AnchorPoint = Vector2.new(1, 0)
-CloseButton_2.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-CloseButton_2.BorderColor3 = Color3.fromRGB(191, 191, 191)
-CloseButton_2.BorderSizePixel = 0
-CloseButton_2.Position = UDim2.new(1, -1, 0, 1)
-CloseButton_2.Size = UDim2.new(0, 36, 0, 36)
-CloseButton_2.SizeConstraint = Enum.SizeConstraint.RelativeYY
-CloseButton_2.ZIndex = 5
-CloseButton_2.Modal = true
-CloseButton_2.Text = "X"
-CloseButton_2.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton_2.TextScaled = true
-CloseButton_2.TextSize = 14.000
-CloseButton_2.TextWrapped = true
-
-CreditTotalText_2.Name = "CreditTotalText"
-CreditTotalText_2.Parent = TopBar_2
-CreditTotalText_2.AnchorPoint = Vector2.new(1, 0)
-CreditTotalText_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CreditTotalText_2.BackgroundTransparency = 1.000
-CreditTotalText_2.BorderSizePixel = 0
-CreditTotalText_2.Position = UDim2.new(1, -111, 0, 0)
-CreditTotalText_2.Size = UDim2.new(0, 120, 1, 0)
-CreditTotalText_2.ZIndex = 5
-CreditTotalText_2.Text = ver
-CreditTotalText_2.TextColor3 = Color3.fromRGB(255, 255, 0)
-CreditTotalText_2.TextScaled = true
-CreditTotalText_2.TextSize = 34.000
-CreditTotalText_2.TextWrapped = true
-CreditTotalText_2.TextXAlignment = Enum.TextXAlignment.Right
-
-PageTitleText_2.Name = "PageTitleText"
-PageTitleText_2.Parent = TopBar_2
-PageTitleText_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-PageTitleText_2.BackgroundTransparency = 1.000
-PageTitleText_2.BorderSizePixel = 0
-PageTitleText_2.Position = UDim2.new(0, 10, 0, 0)
-PageTitleText_2.Size = UDim2.new(0.5, 0, 0, 40)
-PageTitleText_2.ZIndex = 5
-PageTitleText_2.Text = "ftfhax"
-PageTitleText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
-PageTitleText_2.TextScaled = true
-PageTitleText_2.TextSize = 34.000
-PageTitleText_2.TextWrapped = true
-PageTitleText_2.TextXAlignment = Enum.TextXAlignment.Left
-
-Body_2.Name = "Body"
-Body_2.Parent = MainMenuWindow
-Body_2.AnchorPoint = Vector2.new(0.5, 0)
-Body_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Body_2.BackgroundTransparency = 1.000
-Body_2.BorderSizePixel = 0
-Body_2.Position = UDim2.new(0.5, 0, 0, 45)
-Body_2.Size = UDim2.new(1, -10, 1, -50)
-
-UIGridLayout_2.Parent = Body_2
-UIGridLayout_2.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIGridLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
-UIGridLayout_2.VerticalAlignment = Enum.VerticalAlignment.Center
-UIGridLayout_2.CellSize = UDim2.new(0, 132, 0, 132)
-
-ESPButton.Name = "ESPButton"
-ESPButton.Parent = Body_2
-ESPButton.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
-ESPButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ESPButton.BorderSizePixel = 0
-ESPButton.LayoutOrder = 1
-ESPButton.Size = UDim2.new(0, 100, 0, 100)
-
-BottomText.Name = "BottomText"
-BottomText.Parent = ESPButton
-BottomText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-BottomText.BackgroundTransparency = 1.000
-BottomText.BorderSizePixel = 0
-BottomText.Position = UDim2.new(0, 0, 0.800000012, 0)
-BottomText.Size = UDim2.new(1, 0, 0.200000003, 0)
-BottomText.Text = "ESP"
-BottomText.TextColor3 = Color3.fromRGB(255, 255, 255)
-BottomText.TextScaled = true
-BottomText.TextSize = 14.000
-BottomText.TextWrapped = true
-
-TempIcon.Name = "TempIcon"
-TempIcon.Parent = ESPButton
-TempIcon.AnchorPoint = Vector2.new(0.5, 0)
-TempIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TempIcon.BackgroundTransparency = 1.000
-TempIcon.Position = UDim2.new(0.5, 0, 0, 0)
-TempIcon.Size = UDim2.new(0.800000012, 0, 0.800000012, 0)
-TempIcon.Image = "rbxassetid://2594274683"
-
-ToolsButton.Name = "ToolsButton"
-ToolsButton.Parent = Body_2
-ToolsButton.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
-ToolsButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ToolsButton.BorderSizePixel = 0
-ToolsButton.LayoutOrder = 2
-ToolsButton.Size = UDim2.new(0, 100, 0, 100)
-
-BottomText_2.Name = "BottomText"
-BottomText_2.Parent = ToolsButton
-BottomText_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-BottomText_2.BackgroundTransparency = 1.000
-BottomText_2.BorderSizePixel = 0
-BottomText_2.Position = UDim2.new(0, 0, 0.800000012, 0)
-BottomText_2.Size = UDim2.new(1, 0, 0.200000003, 0)
-BottomText_2.Text = "Tools"
-BottomText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
-BottomText_2.TextScaled = true
-BottomText_2.TextSize = 14.000
-BottomText_2.TextWrapped = true
-
-TempIcon_2.Name = "TempIcon"
-TempIcon_2.Parent = ToolsButton
-TempIcon_2.AnchorPoint = Vector2.new(0.5, 0)
-TempIcon_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TempIcon_2.BackgroundTransparency = 1.000
-TempIcon_2.Position = UDim2.new(0.5, 0, 0, 0)
-TempIcon_2.Size = UDim2.new(0.800000012, 0, 0.800000012, 0)
-TempIcon_2.Image = "rbxassetid://12403104094"
-
+-- ================================================
+-- TOOLS MENU WINDOW
+-- ================================================
+local ToolsMenuWindow = Instance.new("Frame")
 ToolsMenuWindow.Name = "ToolsMenuWindow"
 ToolsMenuWindow.Parent = FTFHAX
 ToolsMenuWindow.AnchorPoint = Vector2.new(0.5, 0.5)
 ToolsMenuWindow.BackgroundColor3 = Color3.fromRGB(47, 47, 47)
-ToolsMenuWindow.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ToolsMenuWindow.BorderSizePixel = 2
 ToolsMenuWindow.ClipsDescendants = true
 ToolsMenuWindow.Position = UDim2.new(0.5, 0, 0.5, -18)
@@ -449,35 +378,33 @@ ToolsMenuWindow.Size = UDim2.new(0, 480, 0, 175)
 ToolsMenuWindow.SizeConstraint = Enum.SizeConstraint.RelativeYY
 ToolsMenuWindow.Visible = false
 
+local Body_3 = Instance.new("Frame")
 Body_3.Name = "Body"
 Body_3.Parent = ToolsMenuWindow
-Body_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Body_3.BackgroundTransparency = 1.000
+Body_3.BackgroundTransparency = 1
 Body_3.BorderSizePixel = 0
 Body_3.Position = UDim2.new(0, 0, 0, 40)
 Body_3.Size = UDim2.new(1, 0, 1, -40)
 
-TitleLabel_2.Name = "TitleLabel"
+local TitleLabel_2 = Instance.new("TextLabel")
 TitleLabel_2.Parent = Body_3
 TitleLabel_2.AnchorPoint = Vector2.new(0.5, 0)
 TitleLabel_2.BackgroundColor3 = Color3.fromRGB(63, 63, 63)
-TitleLabel_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TitleLabel_2.BorderSizePixel = 0
-TitleLabel_2.Position = UDim2.new(0.5, 0, -1.06500006, 150)
-TitleLabel_2.Size = UDim2.new(1, -10, 0.0235044118, 30)
+TitleLabel_2.Position = UDim2.new(0.5, 0, -1.065, 150)
+TitleLabel_2.Size = UDim2.new(1, -10, 0.0235, 30)
 TitleLabel_2.Text = "Tools"
 TitleLabel_2.TextColor3 = Color3.fromRGB(144, 255, 161)
 TitleLabel_2.TextScaled = true
-TitleLabel_2.TextSize = 14.000
-TitleLabel_2.TextWrapped = true
 
+local ButtonsFrame_2 = Instance.new("Frame")
 ButtonsFrame_2.Name = "ButtonsFrame"
 ButtonsFrame_2.Parent = Body_3
-ButtonsFrame_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ButtonsFrame_2.BackgroundTransparency = 1.000
+ButtonsFrame_2.BackgroundTransparency = 1
 ButtonsFrame_2.Position = UDim2.new(0, 5, 0, 45)
-ButtonsFrame_2.Size = UDim2.new(1, -10, -0.00555555569, 85)
+ButtonsFrame_2.Size = UDim2.new(1, -10, -0.00555, 85)
 
+local UIGridLayout_3 = Instance.new("UIGridLayout")
 UIGridLayout_3.Parent = ButtonsFrame_2
 UIGridLayout_3.FillDirection = Enum.FillDirection.Vertical
 UIGridLayout_3.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -485,57 +412,198 @@ UIGridLayout_3.SortOrder = Enum.SortOrder.LayoutOrder
 UIGridLayout_3.CellPadding = UDim2.new(0, 6, 0, 6)
 UIGridLayout_3.CellSize = UDim2.new(0, 152, 0, 39)
 
-NeverFailButton.Name = "NeverFailButton"
-NeverFailButton.Parent = ButtonsFrame_2
-NeverFailButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-NeverFailButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-NeverFailButton.BorderSizePixel = 0
-NeverFailButton.Size = UDim2.new(0, 200, 0, 50)
-NeverFailButton.Text = "Never Fail"
-NeverFailButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-NeverFailButton.TextScaled = true
-NeverFailButton.TextSize = 14.000
-NeverFailButton.TextWrapped = true
+local function makeToolBtn(name, text, order)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Parent = ButtonsFrame_2
+    b.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
+    b.BorderSizePixel = 0
+    b.LayoutOrder = order
+    b.Size = UDim2.new(0, 200, 0, 50)
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.TextScaled = true
+    return b
+end
 
-AutoPlayButton.Name = "AutoPlayButton"
-AutoPlayButton.Parent = ButtonsFrame_2
-AutoPlayButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-AutoPlayButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-AutoPlayButton.BorderSizePixel = 0
-AutoPlayButton.LayoutOrder = 1
-AutoPlayButton.Size = UDim2.new(0, 200, 0, 50)
-AutoPlayButton.Text = "Auto-Play"
-AutoPlayButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoPlayButton.TextScaled = true
-AutoPlayButton.TextSize = 14.000
-AutoPlayButton.TextWrapped = true
+local NeverFailButton    = makeToolBtn("NeverFailButton",    "Never Fail",   0)
+local AutoPlayButton     = makeToolBtn("AutoPlayButton",     "Auto-Play",    1)
+local AutoInteractButton = makeToolBtn("AutoInteractButton", "Auto Interact",2)
+local BeastCamButton     = makeToolBtn("BeastCamButton",     "Beast Cam",    3)
+-- *** NOVO BOTÃO SPEED ***
+SpeedButton              = makeToolBtn("SpeedButton",        "Speed [T]",    4)
 
-AutoInteractButton.Name = "AutoInteractButton"
-AutoInteractButton.Parent = ButtonsFrame_2
-AutoInteractButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-AutoInteractButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-AutoInteractButton.BorderSizePixel = 0
-AutoInteractButton.LayoutOrder = 2
-AutoInteractButton.Size = UDim2.new(0, 200, 0, 50)
-AutoInteractButton.Text = "Auto Interact"
-AutoInteractButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoInteractButton.TextScaled = true
-AutoInteractButton.TextSize = 14.000
-AutoInteractButton.TextWrapped = true
+-- *** SPEED MENU — GUI original do segundo script, separada do FTFHAX ***
+local speedScreenGui = Instance.new("ScreenGui")
+speedScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+speedScreenGui.ResetOnSpawn = false
 
-BeastCamButton.Name = "BeastCamButton"
-BeastCamButton.Parent = ButtonsFrame_2
-BeastCamButton.BackgroundColor3 = Color3.fromRGB(191, 0, 0)
-BeastCamButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-BeastCamButton.BorderSizePixel = 0
-BeastCamButton.LayoutOrder = 3
-BeastCamButton.Size = UDim2.new(0, 200, 0, 50)
-BeastCamButton.Text = "Beast Cam"
-BeastCamButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-BeastCamButton.TextScaled = true
-BeastCamButton.TextSize = 14.000
-BeastCamButton.TextWrapped = true
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 200, 0, 150)
+mainFrame.Position = UDim2.new(0.5, -100, 0, 50)
+mainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = false
+mainFrame.Parent = speedScreenGui
+mainFrame.ClipsDescendants = true
+mainFrame.Visible = false
 
+local shadow = Instance.new("ImageLabel")
+shadow.Size = UDim2.new(1, 30, 1, 30)
+shadow.Position = UDim2.new(0, -15, 0, -15)
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageColor3 = Color3.new(0, 0, 0)
+shadow.ImageTransparency = 0.5
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.BackgroundTransparency = 1
+shadow.ZIndex = 0
+shadow.Parent = mainFrame
+
+local titleFrame = Instance.new("Frame")
+titleFrame.Size = UDim2.new(1, 0, 0, 30)
+titleFrame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+titleFrame.BackgroundTransparency = 0.3
+titleFrame.BorderSizePixel = 0
+titleFrame.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -50, 1, 0)
+titleLabel.Position = UDim2.new(0, 5, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.new(1, 1, 1)
+titleLabel.Text = "Speed Hack"
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 18
+titleLabel.Parent = titleFrame
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 20, 0, 20)
+closeButton.Position = UDim2.new(1, -25, 0, 5)
+closeButton.BackgroundColor3 = Color3.new(1, 0, 0)
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.TextScaled = true
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.Parent = titleFrame
+
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 20, 0, 20)
+minimizeButton.Position = UDim2.new(1, -50, 0, 5)
+minimizeButton.BackgroundColor3 = Color3.new(0.5, 0.5, 0.5)
+minimizeButton.TextColor3 = Color3.new(1, 1, 1)
+minimizeButton.TextScaled = true
+minimizeButton.Text = "-"
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.Parent = titleFrame
+
+SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(0, 180, 0, 30)
+SpeedLabel.Position = UDim2.new(0.5, -90, 0, 40)
+SpeedLabel.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+SpeedLabel.BackgroundTransparency = 0.3
+SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
+SpeedLabel.TextScaled = true
+SpeedLabel.Text = "Speed: " .. speed
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.Parent = mainFrame
+
+SpeedToggleButton = Instance.new("TextButton")
+SpeedToggleButton.Size = UDim2.new(0, 60, 0, 30)
+SpeedToggleButton.Position = UDim2.new(0.5, -30, 0, 80)
+SpeedToggleButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+SpeedToggleButton.BackgroundTransparency = 0.3
+SpeedToggleButton.TextColor3 = Color3.new(1, 1, 1)
+SpeedToggleButton.TextScaled = true
+SpeedToggleButton.Text = "Off"
+SpeedToggleButton.Font = Enum.Font.GothamBold
+SpeedToggleButton.Parent = mainFrame
+
+local hotkeyLabel = Instance.new("TextLabel")
+hotkeyLabel.Size = UDim2.new(0, 180, 0, 20)
+hotkeyLabel.Position = UDim2.new(0.5, -90, 0, 115)
+hotkeyLabel.BackgroundTransparency = 1
+hotkeyLabel.TextColor3 = Color3.new(0.8, 0.8, 1)
+hotkeyLabel.TextScaled = true
+hotkeyLabel.Text = "Pressione 'T' para ativar/desativar"
+hotkeyLabel.Font = Enum.Font.Gotham
+hotkeyLabel.TextSize = 12
+hotkeyLabel.Parent = mainFrame
+
+local SpeedIncButton = Instance.new("TextButton")
+SpeedIncButton.Size = UDim2.new(0, 30, 0, 30)
+SpeedIncButton.Position = UDim2.new(0.75, -15, 0, 80)
+SpeedIncButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+SpeedIncButton.BackgroundTransparency = 0.3
+SpeedIncButton.TextColor3 = Color3.new(1, 1, 1)
+SpeedIncButton.TextScaled = true
+SpeedIncButton.Text = ">"
+SpeedIncButton.Font = Enum.Font.GothamBold
+SpeedIncButton.Parent = mainFrame
+
+local SpeedDecButton = Instance.new("TextButton")
+SpeedDecButton.Size = UDim2.new(0, 30, 0, 30)
+SpeedDecButton.Position = UDim2.new(0.25, -15, 0, 80)
+SpeedDecButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+SpeedDecButton.BackgroundTransparency = 0.3
+SpeedDecButton.TextColor3 = Color3.new(1, 1, 1)
+SpeedDecButton.TextScaled = true
+SpeedDecButton.Text = "<"
+SpeedDecButton.Font = Enum.Font.GothamBold
+SpeedDecButton.Parent = mainFrame
+
+-- minimize logic original
+local guiVisible = true
+minimizeButton.MouseButton1Click:Connect(function()
+    guiVisible = not guiVisible
+    for _, element in pairs(mainFrame:GetChildren()) do
+        if element ~= titleFrame then
+            element.Visible = guiVisible
+        end
+    end
+    mainFrame.Size = guiVisible and UDim2.new(0, 200, 0, 150) or UDim2.new(0, 200, 0, 30)
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    if SpeedButton then
+        SpeedButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
+    end
+end)
+
+-- drag manual apenas com botão esquerdo
+do
+    local dragging = false
+    local dragStart
+    local startPos
+
+    titleFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    titleFrame.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+local TopBar_3 = Instance.new("Frame")
 TopBar_3.Name = "TopBar"
 TopBar_3.Parent = ToolsMenuWindow
 TopBar_3.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
@@ -543,28 +611,23 @@ TopBar_3.BorderSizePixel = 0
 TopBar_3.Size = UDim2.new(1, 0, 0, 40)
 TopBar_3.ZIndex = 5
 
-CloseButton_3.Name = "CloseButton"
+local CloseButton_3 = Instance.new("TextButton")
 CloseButton_3.Parent = TopBar_3
 CloseButton_3.AnchorPoint = Vector2.new(1, 0)
 CloseButton_3.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-CloseButton_3.BorderColor3 = Color3.fromRGB(191, 191, 191)
 CloseButton_3.BorderSizePixel = 0
 CloseButton_3.Position = UDim2.new(1, -1, 0, 1)
 CloseButton_3.Size = UDim2.new(0, 36, 0, 36)
 CloseButton_3.SizeConstraint = Enum.SizeConstraint.RelativeYY
 CloseButton_3.ZIndex = 5
-CloseButton_3.Modal = true
 CloseButton_3.Text = "X"
 CloseButton_3.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton_3.TextScaled = true
-CloseButton_3.TextSize = 14.000
-CloseButton_3.TextWrapped = true
 
-BackButton_2.Name = "BackButton"
+local BackButton_2 = Instance.new("TextButton")
 BackButton_2.Parent = TopBar_3
 BackButton_2.AnchorPoint = Vector2.new(1, 0)
 BackButton_2.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-BackButton_2.BorderColor3 = Color3.fromRGB(191, 191, 191)
 BackButton_2.BorderSizePixel = 0
 BackButton_2.Position = UDim2.new(1, -41, 0, 1)
 BackButton_2.Size = UDim2.new(1, -4, 1, -4)
@@ -573,441 +636,376 @@ BackButton_2.ZIndex = 5
 BackButton_2.Text = "<"
 BackButton_2.TextColor3 = Color3.fromRGB(255, 255, 255)
 BackButton_2.TextScaled = true
-BackButton_2.TextSize = 14.000
-BackButton_2.TextWrapped = true
 
-CreditTotalText_3.Name = "CreditTotalText"
+local CreditTotalText_3 = Instance.new("TextLabel")
 CreditTotalText_3.Parent = TopBar_3
 CreditTotalText_3.AnchorPoint = Vector2.new(1, 0)
-CreditTotalText_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CreditTotalText_3.BackgroundTransparency = 1.000
-CreditTotalText_3.BorderSizePixel = 0
+CreditTotalText_3.BackgroundTransparency = 1
 CreditTotalText_3.Position = UDim2.new(1, -111, 0, 0)
 CreditTotalText_3.Size = UDim2.new(0, 120, 1, 0)
 CreditTotalText_3.ZIndex = 5
 CreditTotalText_3.Text = ver
 CreditTotalText_3.TextColor3 = Color3.fromRGB(255, 255, 0)
 CreditTotalText_3.TextScaled = true
-CreditTotalText_3.TextSize = 34.000
-CreditTotalText_3.TextWrapped = true
 CreditTotalText_3.TextXAlignment = Enum.TextXAlignment.Right
 
-PageTitleText_3.Name = "PageTitleText"
+local PageTitleText_3 = Instance.new("TextLabel")
 PageTitleText_3.Parent = TopBar_3
-PageTitleText_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-PageTitleText_3.BackgroundTransparency = 1.000
-PageTitleText_3.BorderSizePixel = 0
+PageTitleText_3.BackgroundTransparency = 1
 PageTitleText_3.Position = UDim2.new(0, 10, 0, 0)
 PageTitleText_3.Size = UDim2.new(0.5, 0, 0, 40)
 PageTitleText_3.ZIndex = 5
 PageTitleText_3.Text = "ftfhax"
 PageTitleText_3.TextColor3 = Color3.fromRGB(255, 255, 255)
 PageTitleText_3.TextScaled = true
-PageTitleText_3.TextSize = 34.000
-PageTitleText_3.TextWrapped = true
 PageTitleText_3.TextXAlignment = Enum.TextXAlignment.Left
 
-ViewportFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+local ViewportFrame = Instance.new("ViewportFrame")
 ViewportFrame.Parent = FTFHAX
-ViewportFrame.Position = UDim2.new(0, 5, 0.666000009, -5)
+ViewportFrame.Position = UDim2.new(0, 5, 0.666, -5)
 ViewportFrame.Size = UDim2.new(0.333, 0, 0.333, 0)
-ViewportFrame.Ambient = Color3.fromRGB(147,147,147)
-ViewportFrame.LightDirection = Vector3.new(0,1,0)
-ViewportFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+ViewportFrame.Ambient = Color3.fromRGB(147, 147, 147)
+ViewportFrame.LightDirection = Vector3.new(0, 1, 0)
+ViewportFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 ViewportFrame.BackgroundTransparency = 0.9
 ViewportFrame.Visible = false
 
-
--- SUBSTITUA O BLOCO DE DRAG ANTIGO POR ESTE
--- coloque exatamente após: ViewportFrame.Visible = false
-
-do
-	local UIS = game:GetService("UserInputService")
-
-	local dragging = false
-	local dragged = false
-	local dragStart
-	local startPos
-
-	CheatButton.MouseButton1Down:Connect(function()
-		dragging = true
-		dragged = false
-
-		dragStart = UIS:GetMouseLocation()
-		startPos = MenusTabFrame.Position
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragged = true
-
-			local mousePos = UIS:GetMouseLocation()
-			local delta = mousePos - dragStart
-
-			MenusTabFrame.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-
-	UIS.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = false
-		end
-	end)
-
-	CheatButton.MouseButton1Up:Connect(function()
-		if not dragged then
-			ESPMenuWindow.Visible = false
-			ToolsMenuWindow.Visible = false
-			MainMenuWindow.Visible = not MainMenuWindow.Visible
-		end
-	end)
+-- ================================================
+-- HELPER: atualiza visual do SpeedButton e SpeedLabel
+-- ================================================
+local function refreshSpeedUI()
+    SpeedLabel.Text = "Speed: " .. speed .. (speedEnabled and " (ON)" or " (OFF)")
+    SpeedToggleButton.Text = speedEnabled and "On" or "Off"
+    if speedEnabled then
+        SpeedToggleButton.BackgroundColor3 = Color3.new(0, 0.7, 0)
+        SpeedButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
+    else
+        SpeedToggleButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+        SpeedButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
+    end
 end
 
+-- ================================================
+-- DRAG
+-- ================================================
+do
+    local UIS = game:GetService("UserInputService")
+    local dragging = false
+    local dragged = false
+    local dragStart
+    local startPos
 
--- FIX PARA O BOTÃO X FECHAR DE QUALQUER TELA
-CloseButton_2.MouseButton1Click:Connect(function()
-	MainMenuWindow.Visible = false
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = false
-end)
+    CheatButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragged = false
+            dragStart = UIS:GetMouseLocation()
+            startPos = MenusTabFrame.Position
+        end
+    end)
 
-CloseButton.MouseButton1Click:Connect(function()
-	MainMenuWindow.Visible = false
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = false
-end)
+    CheatButton.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragged = true
+            local mousePos = UIS:GetMouseLocation()
+            local delta = mousePos - dragStart
+            MenusTabFrame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
 
-CloseButton_3.MouseButton1Click:Connect(function()
-	MainMenuWindow.Visible = false
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = false
-end)
+    CheatButton.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+            if not dragged then
+                ESPMenuWindow.Visible = false
+                ToolsMenuWindow.Visible = false
+                MainMenuWindow.Visible = not MainMenuWindow.Visible
+            end
+            dragged = false
+        end
+    end)
+end
 
+-- ================================================
+-- NAVEGAÇÃO
+-- ================================================
+local function closeAll()
+    MainMenuWindow.Visible = false
+    ESPMenuWindow.Visible = false
+    ToolsMenuWindow.Visible = false
+end
 
-BackButton.MouseButton1Down:Connect(function()
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = false
-	MainMenuWindow.Visible = true
-end)
+local function goBack()
+    ESPMenuWindow.Visible = false
+    ToolsMenuWindow.Visible = false
+    MainMenuWindow.Visible = true
+end
 
-BackButton_2.MouseButton1Down:Connect(function()
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = false
-	MainMenuWindow.Visible = true
-end)
+CloseButton_2.MouseButton1Click:Connect(closeAll)
+CloseButton.MouseButton1Click:Connect(closeAll)
+CloseButton_3.MouseButton1Click:Connect(closeAll)
+
+BackButton.MouseButton1Down:Connect(goBack)
+BackButton_2.MouseButton1Down:Connect(goBack)
 
 ESPButton.MouseButton1Down:Connect(function()
-	ESPMenuWindow.Visible = true
-	ToolsMenuWindow.Visible = false
-	MainMenuWindow.Visible = false
+    ESPMenuWindow.Visible = true
+    ToolsMenuWindow.Visible = false
+    MainMenuWindow.Visible = false
 end)
 
 ToolsButton.MouseButton1Down:Connect(function()
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = true
-	MainMenuWindow.Visible = false
+    ESPMenuWindow.Visible = false
+    ToolsMenuWindow.Visible = true
+    MainMenuWindow.Visible = false
 end)
 
+-- Botão Speed: abre/fecha o menu de speed (independente do FTFHAX)
+SpeedButton.MouseButton1Down:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
 
-local podstoggle = false
-local pctoggle = false
-local playertoggle = false
-local bestpctoggle = false
-local exitstoggle = false
-local beastcamtoggle = false
+-- ================================================
+-- SPEED MENU BUTTONS (lógica original do segundo script)
+-- ================================================
+SpeedToggleButton.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    updateSpeed()
+    refreshSpeedUI()
+end)
 
-local neverfailtoggle = false
+SpeedIncButton.MouseButton1Click:Connect(function()
+    speed = speed + 5
+    if speedEnabled then applySpeed() end
+    refreshSpeedUI()
+end)
+
+SpeedDecButton.MouseButton1Click:Connect(function()
+    if speed > 16 then
+        speed = speed - 5
+        if speedEnabled then applySpeed() end
+        refreshSpeedUI()
+    end
+end)
+
+-- ================================================
+-- TOGGLES (ESP / TOOLS originais)
+-- ================================================
+local podstoggle      = false
+local pctoggle        = false
+local playertoggle    = false
+local bestpctoggle    = false
+local exitstoggle     = false
+local beastcamtoggle  = false
+local neverfailtoggle    = false
 local autointeracttoggle = false
-local autoplaytoggle = false
+local autoplaytoggle     = false
 
+local function toggleBtn(btn, state)
+    btn.BackgroundColor3 = state and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+end
 
 PodsESPButton.MouseButton1Down:Connect(function()
-	if podstoggle == false then
-		podstoggle = true
-		PodsESPButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-		reloadESP()
-	else
-		podstoggle = false
-		PodsESPButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-		reloadESP()
-	end
+    podstoggle = not podstoggle; toggleBtn(PodsESPButton, podstoggle); reloadESP()
 end)
-
 PCESPButton.MouseButton1Down:Connect(function()
-	if pctoggle == false then
-		pctoggle = true
-		PCESPButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-		reloadESP()
-	else
-		pctoggle = false
-		PCESPButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-		reloadESP()
-	end
+    pctoggle = not pctoggle; toggleBtn(PCESPButton, pctoggle); reloadESP()
 end)
-
 PlayerESPButton.MouseButton1Down:Connect(function()
-	if playertoggle == false then
-		playertoggle = true
-		PlayerESPButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-		reloadESP()
-	else
-		playertoggle = false
-		PlayerESPButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-		reloadESP()
-	end
+    playertoggle = not playertoggle; toggleBtn(PlayerESPButton, playertoggle); reloadESP()
 end)
-
 BestPCESPButton.MouseButton1Down:Connect(function()
-	if bestpctoggle == false then
-		bestpctoggle = true
-		BestPCESPButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-		reloadESP()
-	else
-		bestpctoggle = false
-		BestPCESPButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-		reloadESP()
-	end
+    bestpctoggle = not bestpctoggle; toggleBtn(BestPCESPButton, bestpctoggle); reloadESP()
 end)
-
 ExitsESPButton.MouseButton1Down:Connect(function()
-	if exitstoggle == false then
-		exitstoggle = true
-		ExitsESPButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-		reloadESP()
-	else
-		exitstoggle = false
-		ExitsESPButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-		reloadESP()
-	end
+    exitstoggle = not exitstoggle; toggleBtn(ExitsESPButton, exitstoggle); reloadESP()
 end)
 
 NeverFailButton.MouseButton1Down:Connect(function()
-	if neverfailtoggle == false then
-		neverfailtoggle = true
-		NeverFailButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-	else
-		neverfailtoggle = false
-		NeverFailButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-	end
+    neverfailtoggle = not neverfailtoggle; toggleBtn(NeverFailButton, neverfailtoggle)
 end)
-
 AutoInteractButton.MouseButton1Down:Connect(function()
-	if autointeracttoggle == false then
-		autointeracttoggle = true
-		AutoInteractButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-	else
-		autointeracttoggle = false
-		AutoInteractButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-	end
+    autointeracttoggle = not autointeracttoggle; toggleBtn(AutoInteractButton, autointeracttoggle)
 end)
-
 BeastCamButton.MouseButton1Down:Connect(function()
-	if beastcamtoggle == false then
-		beastcamtoggle = true
-		ViewportFrame.Visible = true
-		BeastCamButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-		reloadBeastCam()
-	else
-		ViewportFrame:ClearAllChildren()
-		beastcamtoggle = false
-		ViewportFrame.Visible = false
-		BeastCamButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-	end
+    if not beastcamtoggle then
+        beastcamtoggle = true
+        ViewportFrame.Visible = true
+        toggleBtn(BeastCamButton, true)
+        reloadBeastCam()
+    else
+        ViewportFrame:ClearAllChildren()
+        beastcamtoggle = false
+        ViewportFrame.Visible = false
+        toggleBtn(BeastCamButton, false)
+    end
 end)
-
 AutoPlayButton.MouseButton1Down:Connect(function()
-	if autoplaytoggle == false then
-		autoplaytoggle = true
-		AutoPlayButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-	else
-		autoplaytoggle = false
-		AutoPlayButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
-	end
+    autoplaytoggle = not autoplaytoggle; toggleBtn(AutoPlayButton, autoplaytoggle)
 end)
 
+-- ================================================
+-- FUNÇÕES ORIGINAIS (ESP, BeastCam, etc.)
+-- ================================================
 function reloadESP()
-	spawn(function()
-		local map = game.ReplicatedStorage.CurrentMap.Value
-		if map ~= nil then
-		local mapstuff = map:getChildren()
-		for i=1,#mapstuff do
-			if mapstuff[i].Name == "ComputerTable" then
-				if mapstuff[i]:findFirstChild("Highlight") and not pctoggle then
-					mapstuff[i].Highlight:remove()
-				end
-				if pctoggle and not mapstuff[i]:findFirstChild("Highlight") then
-					local a = Instance.new("Highlight", mapstuff[i])
-					a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-					a.FillColor = Color3.fromRGB(13, 105, 172)
-					a.OutlineColor = Color3.fromRGB(20, 165, 270)
-					spawn(function()
-						repeat 
-							if bestpctoggle and mapstuff[i]:findFirstChild("Screen") then
-								if getBestPC()[1].pc ~= nil and mapstuff[i] == getBestPC()[1].pc then
-									a.FillColor = mapstuff[i]:findFirstChild("Screen").Color
-									a.OutlineColor = Color3.fromRGB(200, 0, 255)
-								else
-									a.FillColor = mapstuff[i]:findFirstChild("Screen").Color
-									a.OutlineColor = Color3.fromRGB(a.FillColor.R*400, a.FillColor.G*400, a.FillColor.B*400)
-								end
-							else
-								a.FillColor = mapstuff[i]:findFirstChild("Screen").Color
-								a.OutlineColor = Color3.fromRGB(a.FillColor.R*400, a.FillColor.G*400, a.FillColor.B*400)
-							end
-							wait(1)
-						until mapstuff[i] == nil or a == nil
-					end)
-				end
-			end
-			if mapstuff[i].Name == "FreezePod" then
-				if mapstuff[i]:findFirstChild("Highlight") and not podstoggle then
-					mapstuff[i].Highlight:remove()
-				end
-				if podstoggle and not mapstuff[i]:findFirstChild("Highlight") then
-					local a = Instance.new("Highlight", mapstuff[i])
-					a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-					a.FillColor = Color3.fromRGB(120,200,255)
-					a.OutlineColor = Color3.fromRGB(160,255,255)
-				end
-			end
-			if mapstuff[i].Name == "ExitDoor" then
-				if mapstuff[i]:findFirstChild("Highlight") and not exitstoggle then
-					mapstuff[i].Highlight:remove()
-				end
-				if exitstoggle and not mapstuff[i]:findFirstChild("Highlight") then
-					local a = Instance.new("Highlight", mapstuff[i])
-					a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-					a.FillColor = Color3.fromRGB(252, 255, 100)
-					a.OutlineColor = Color3.fromRGB(255,255,160)
-				end
-			end
-		end
-		end
-	end)
-	local player = game.Players:GetChildren()
-	for i=1, #player do
-		if player[i] ~= game.Players.LocalPlayer and player[i].Character ~= nil then
-		local character = player[i].Character
-		if character:findFirstChild("Highlight") and not playertoggle then
-			character.Highlight:remove()
-		end
-		if playertoggle and not character:findFirstChild("Highlight") then
-			local a = Instance.new("Highlight", character)
-			a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			a.FillColor = Color3.fromRGB(0,255,0)
-			a.OutlineColor = Color3.fromRGB(127,255,127)
-			spawn(function()
-				repeat
-					wait(0.1)
-					if player[i] == getBeast() then
-						a.FillColor = Color3.fromRGB(255,0,0)
-						a.OutlineColor = Color3.fromRGB(255,127,127)
-					else
-						a.FillColor = Color3.fromRGB(0,255,0)
-						a.OutlineColor = Color3.fromRGB(127,255,127)
-					end
-				until character == nil or a == nil
-			end)
-			end
-			end
-	end
+    spawn(function()
+        local map = game.ReplicatedStorage.CurrentMap.Value
+        if map ~= nil then
+            local mapstuff = map:getChildren()
+            for i=1,#mapstuff do
+                if mapstuff[i].Name == "ComputerTable" then
+                    if mapstuff[i]:findFirstChild("Highlight") and not pctoggle then
+                        mapstuff[i].Highlight:remove()
+                    end
+                    if pctoggle and not mapstuff[i]:findFirstChild("Highlight") then
+                        local a = Instance.new("Highlight", mapstuff[i])
+                        a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        a.FillColor = Color3.fromRGB(13, 105, 172)
+                        a.OutlineColor = Color3.fromRGB(20, 165, 270)
+                        spawn(function()
+                            repeat
+                                if bestpctoggle and mapstuff[i]:findFirstChild("Screen") then
+                                    if getBestPC()[1].pc ~= nil and mapstuff[i] == getBestPC()[1].pc then
+                                        a.FillColor = mapstuff[i]:findFirstChild("Screen").Color
+                                        a.OutlineColor = Color3.fromRGB(200, 0, 255)
+                                    else
+                                        a.FillColor = mapstuff[i]:findFirstChild("Screen").Color
+                                        a.OutlineColor = Color3.fromRGB(a.FillColor.R*400, a.FillColor.G*400, a.FillColor.B*400)
+                                    end
+                                else
+                                    a.FillColor = mapstuff[i]:findFirstChild("Screen").Color
+                                    a.OutlineColor = Color3.fromRGB(a.FillColor.R*400, a.FillColor.G*400, a.FillColor.B*400)
+                                end
+                                wait(1)
+                            until mapstuff[i] == nil or a == nil
+                        end)
+                    end
+                end
+                if mapstuff[i].Name == "FreezePod" then
+                    if mapstuff[i]:findFirstChild("Highlight") and not podstoggle then
+                        mapstuff[i].Highlight:remove()
+                    end
+                    if podstoggle and not mapstuff[i]:findFirstChild("Highlight") then
+                        local a = Instance.new("Highlight", mapstuff[i])
+                        a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        a.FillColor = Color3.fromRGB(120,200,255)
+                        a.OutlineColor = Color3.fromRGB(160,255,255)
+                    end
+                end
+                if mapstuff[i].Name == "ExitDoor" then
+                    if mapstuff[i]:findFirstChild("Highlight") and not exitstoggle then
+                        mapstuff[i].Highlight:remove()
+                    end
+                    if exitstoggle and not mapstuff[i]:findFirstChild("Highlight") then
+                        local a = Instance.new("Highlight", mapstuff[i])
+                        a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        a.FillColor = Color3.fromRGB(252, 255, 100)
+                        a.OutlineColor = Color3.fromRGB(255,255,160)
+                    end
+                end
+            end
+        end
+    end)
+    local player = game.Players:GetChildren()
+    for i=1, #player do
+        if player[i] ~= game.Players.LocalPlayer and player[i].Character ~= nil then
+            local character = player[i].Character
+            if character:findFirstChild("Highlight") and not playertoggle then
+                character.Highlight:remove()
+            end
+            if playertoggle and not character:findFirstChild("Highlight") then
+                local a = Instance.new("Highlight", character)
+                a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                a.FillColor = Color3.fromRGB(0,255,0)
+                a.OutlineColor = Color3.fromRGB(127,255,127)
+                spawn(function()
+                    repeat
+                        wait(0.1)
+                        if player[i] == getBeast() then
+                            a.FillColor = Color3.fromRGB(255,0,0)
+                            a.OutlineColor = Color3.fromRGB(255,127,127)
+                        else
+                            a.FillColor = Color3.fromRGB(0,255,0)
+                            a.OutlineColor = Color3.fromRGB(127,255,127)
+                        end
+                    until character == nil or a == nil
+                end)
+            end
+        end
+    end
 end
 
-
 function reloadBeastCam()
-	ViewportFrame:ClearAllChildren()
-	if beastcamtoggle and game.ReplicatedStorage.CurrentMap.Value ~= nil then
-		local beast = getBeast()
-		local cam = Instance.new("Camera", ScreenGui)
-		cam.CameraType = Enum.CameraType.Scriptable
-		cam.FieldOfView = 70
-		local map = game.ReplicatedStorage.CurrentMap.Value
-		local mapclone = map:clone()
-		mapclone.Name = "map"
-		local mcstuff = mapclone:getDescendants()
-		for i=1,#mcstuff do
-			if mcstuff[i].Name == "SingleDoor" or mcstuff[i].Name == "DoubleDoor" or mcstuff[i].ClassName == "Sound" or mcstuff[i].ClassName == "LocalScript" or mcstuff[i].ClassName == "Script" then
-				mcstuff[i]:remove() 
-			end
-		end
-
-		mapclone.Parent = ViewportFrame
-		ViewportFrame.CurrentCamera = cam
-
-		spawn(function()
-			repeat
-				wait()
-				if not beastcamtoggle then
-					break
-				end
-				repeat
-					wait()
-				until getBeast().Character ~= nil
-				cam.CFrame = getBeast().Character.Head.CFrame
-				wait()
-			until cam == nil or mapclone == nil or beast ~= getBeast()
-		end)
-
-		spawn(function()
-			local dummy = Instance.new("Folder", ViewportFrame)
-			dummy.Name = "dummy"
-			dummy.Parent = ViewportFrame
-			local doors = Instance.new("Folder", ViewportFrame)
-			doors.Name = "doors"
-			doors.Parent = ViewportFrame
-
-			repeat
-				wait()
-				if not beastcamtoggle then
-					break
-				end
-				local doorsstuff = map:GetChildren()
-				for i=1,#doorsstuff do
-					if doorsstuff[i].Name == "SingleDoor" or doorsstuff[i].Name == "DoubleDoor" then
-						local a = doorsstuff[i]:clone()
-						a.Parent = doors
-					end
-				end
-
-				local players = game.Players:getChildren()
-				for i=1,#players do
-					if players[i] ~= getBeast() then
-						if players[i].Character ~= nil then
-							players[i].Character.Archivable = true
-							local dummyclone = players[i].Character:clone()
-							local bodyparts = dummyclone:getDescendants()
-							for i=1,#bodyparts do
-								if bodyparts[i].ClassName == "Sound" or bodyparts[i].ClassName == "LocalScript" or bodyparts[i].ClassName == "Script" then
-									bodyparts[i]:remove() 
-								end
-							end
-							dummyclone.Parent = dummy
-						end
-					end
-				end
-
-				wait(0.3)
-
-				dummy:ClearAllChildren()
-				doors:ClearAllChildren()
-			until cam == nil or mapclone == nil or beast ~= getBeast()
-		end)
-	end
+    ViewportFrame:ClearAllChildren()
+    if beastcamtoggle and game.ReplicatedStorage.CurrentMap.Value ~= nil then
+        local beast = getBeast()
+        local cam = Instance.new("Camera", ScreenGui)
+        cam.CameraType = Enum.CameraType.Scriptable
+        cam.FieldOfView = 70
+        local map = game.ReplicatedStorage.CurrentMap.Value
+        local mapclone = map:clone()
+        mapclone.Name = "map"
+        local mcstuff = mapclone:getDescendants()
+        for i=1,#mcstuff do
+            if mcstuff[i].Name == "SingleDoor" or mcstuff[i].Name == "DoubleDoor" or mcstuff[i].ClassName == "Sound" or mcstuff[i].ClassName == "LocalScript" or mcstuff[i].ClassName == "Script" then
+                mcstuff[i]:remove()
+            end
+        end
+        mapclone.Parent = ViewportFrame
+        ViewportFrame.CurrentCamera = cam
+        spawn(function()
+            repeat
+                wait()
+                if not beastcamtoggle then break end
+                repeat wait() until getBeast().Character ~= nil
+                cam.CFrame = getBeast().Character.Head.CFrame
+                wait()
+            until cam == nil or mapclone == nil or beast ~= getBeast()
+        end)
+        spawn(function()
+            local dummy = Instance.new("Folder", ViewportFrame)
+            dummy.Name = "dummy"
+            local doors = Instance.new("Folder", ViewportFrame)
+            doors.Name = "doors"
+            repeat
+                wait()
+                if not beastcamtoggle then break end
+                local doorsstuff = map:GetChildren()
+                for i=1,#doorsstuff do
+                    if doorsstuff[i].Name == "SingleDoor" or doorsstuff[i].Name == "DoubleDoor" then
+                        doorsstuff[i]:clone().Parent = doors
+                    end
+                end
+                local players = game.Players:getChildren()
+                for i=1,#players do
+                    if players[i] ~= getBeast() and players[i].Character ~= nil then
+                        players[i].Character.Archivable = true
+                        local dummyclone = players[i].Character:clone()
+                        for _,v in ipairs(dummyclone:getDescendants()) do
+                            if v.ClassName == "Sound" or v.ClassName == "LocalScript" or v.ClassName == "Script" then v:remove() end
+                        end
+                        dummyclone.Parent = dummy
+                    end
+                end
+                wait(0.3)
+                dummy:ClearAllChildren()
+                doors:ClearAllChildren()
+            until cam == nil or mapclone == nil or beast ~= getBeast()
+        end)
+    end
 end
 
 function getBeast()
-	local player = game.Players:GetChildren()
-	for i=1, #player do
-		local character = player[i].Character
-		if player[i]:findFirstChild("TempPlayerStatsModule"):findFirstChild("IsBeast").Value == true or (character ~= nil and character:findFirstChild("BeastPowers")) then
-			return player[i]
-		end
-	end
+    local player = game.Players:GetChildren()
+    for i=1, #player do
+        local character = player[i].Character
+        if player[i]:findFirstChild("TempPlayerStatsModule"):findFirstChild("IsBeast").Value == true or (character ~= nil and character:findFirstChild("BeastPowers")) then
+            return player[i]
+        end
+    end
 end
 
 function getBestPC()
@@ -1015,13 +1013,10 @@ function getBestPC()
     local pcs = {}
     local map = game.ReplicatedStorage.CurrentMap.Value
     if map ~= nil then
-        local mapstuff = map:getChildren()
-        for i=1,#mapstuff do
-            if mapstuff[i].Name == "ComputerTable" then
-                if mapstuff[i].Screen.BrickColor ~= BrickColor.new("Dark green") then
-                    local magnitude = ((mapstuff[i].Screen.Position - beast.Character:findFirstChild("HumanoidRootPart").Position).magnitude)
-                    table.insert(pcs, {magnitude=magnitude, pc=mapstuff[i]})
-                end
+        for _,v in ipairs(map:getChildren()) do
+            if v.Name == "ComputerTable" and v.Screen.BrickColor ~= BrickColor.new("Dark green") then
+                local mag = (v.Screen.Position - beast.Character:findFirstChild("HumanoidRootPart").Position).magnitude
+                table.insert(pcs, {magnitude=mag, pc=v})
             end
         end
     end
@@ -1030,177 +1025,132 @@ function getBestPC()
 end
 
 function isPlayerTyping()
-	local hum = game.Players.LocalPlayer.Character:findFirstChildOfClass("Humanoid")
-	local anims = hum:GetPlayingAnimationTracks()
-	for i=1,#anims do
-		if anims[i].Name == "AnimTyping" then
-			return true
-		end
-	end
-	return false
+    local hum = game.Players.LocalPlayer.Character:findFirstChildOfClass("Humanoid")
+    local anims = hum:GetPlayingAnimationTracks()
+    for _,v in ipairs(anims) do
+        if v.Name == "AnimTyping" then return true end
+    end
+    return false
 end
 
 spawn(function()
-	game.ReplicatedStorage.CurrentMap.Changed:Connect(function()
-		wait(5)
-		reloadESP()
-		if beastcamtoggle then
-			reloadBeastCam()	
-		end
-	end)
+    game.ReplicatedStorage.CurrentMap.Changed:Connect(function()
+        wait(5)
+        reloadESP()
+        if beastcamtoggle then reloadBeastCam() end
+    end)
 end)
 
 spawn(function()
-	game.ReplicatedStorage.IsGameActive.Changed:Connect(function()
-		reloadESP()
-		if beastcamtoggle then
-			reloadBeastCam()	
-		end
-	end)
+    game.ReplicatedStorage.IsGameActive.Changed:Connect(function()
+        reloadESP()
+        if beastcamtoggle then reloadBeastCam() end
+    end)
 end)
 
 spawn(function()
-	game:GetService("Players").PlayerAdded:Connect(function(player)
-		player.CharacterAdded:Connect(function(character)
-			reloadESP()
-		end)
-		player.CharacterRemoved:Connect(function(character)
-			reloadESP()
-		end)
-	end)
+    game:GetService("Players").PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function() reloadESP() end)
+        player.CharacterRemoved:Connect(function() reloadESP() end)
+    end)
 end)
 
 spawn(function()
-	local mt = getrawmetatable(game)
-	local old = mt.__namecall
-	setreadonly(mt,false)
-	mt.__namecall = newcclosure(function(self, ...)
-		local args = {...}
-		if getnamecallmethod() == 'FireServer' and args[1] == 'SetPlayerMinigameResult' and neverfailtoggle then
-			args[2] = true
-		end
-		return old(self, unpack(args))
-	end)
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        if getnamecallmethod() == 'FireServer' and args[1] == 'SetPlayerMinigameResult' and neverfailtoggle then
+            args[2] = true
+        end
+        return old(self, unpack(args))
+    end)
 end)
 
 spawn(function()
-	while true do
-		wait()
-		if neverfailtoggle == true then
-			game.ReplicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
-		end
-	end
+    while true do
+        wait()
+        if neverfailtoggle then
+            game.ReplicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
+        end
+    end
 end)
 
 spawn(function()
-	game.Players.LocalPlayer.PlayerGui.ScreenGui.ActionBox:GetPropertyChangedSignal("Visible"):connect(function()
-		if autointeracttoggle then
-			game.ReplicatedStorage.RemoteEvent:FireServer("Input", "Action", true)
-		end	
-	end)
+    game.Players.LocalPlayer.PlayerGui.ScreenGui.ActionBox:GetPropertyChangedSignal("Visible"):connect(function()
+        if autointeracttoggle then
+            game.ReplicatedStorage.RemoteEvent:FireServer("Input", "Action", true)
+        end
+    end)
 end)
 
 spawn(function()
-	while wait(3) do
-		if autoplaytoggle then	
-			local beast = getBeast()
-			local map = game.ReplicatedStorage.CurrentMap.Value
-			local mapstuff = map:getChildren()
-			for i=1,#mapstuff do
-				if mapstuff[i].Name == "SingleDoor" or mapstuff[i].Name == "DoubleDoor" then
-					local doorParts = mapstuff[i]:getDescendants()
-					for i=1,#doorParts do
-						if doorParts[i].ClassName == "Part" and doorParts[i].Name ~= "Frame" then
-							if not doorParts[i]:findFirstChild("PathfindingModifier") then
-								local a = Instance.new("PathfindingModifier", doorParts[i])
-								a.PassThrough = true
-							end
-							if doorParts[i].Name == "Frame" then
-								local a = Instance.new("PathfindingModifier", doorParts[i])
-								a.PassThrough = false
-								a.Label = "avoid"
-							end
-						end
-					end
-				end
-			end
-
-			local pcs = getBestPC()
-			local PathfindingService = game:GetService("PathfindingService")
-			local Humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
-			local Root = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-			local goal = nil
-			local agentParams = {
-				AgentRadius = 2.4,
-				AgentHeight = 2,
-				AgentCanJump = true,
-				AgentWalkableClimb = 4,
-				WaypointSpacing = 2,
-				Costs = {
-					avoid = 10.0
-				}
-			}
-
-			local beastNearby = ((game.Players.LocalPlayer.Character.HumanoidRootPart.Position - beast.Character:findFirstChild("HumanoidRootPart").Position).magnitude < 50)
-			for i, pc in ipairs(pcs) do
-				if beastNearby then
-					print("beast nearby")
-				end
-
-				if isPlayerTyping() and not beastNearby then
-					break
-				end
-
-				goal = pc.pc["ComputerTrigger1"].Position
-				local goalpc = pc.pc
-				local path = PathfindingService:CreatePath(agentParams)
-
-				path:ComputeAsync(Root.Position, goal)
-				print(path.Status)
-				if path.Status == Enum.PathStatus.Success then
-					local waypoints = path:GetWaypoints()
-					for i, waypoint in ipairs(waypoints) do
-						local ray = Ray.new(waypoints[i].Position, Vector3.new(0, 1, 0) * 3)
-						local part = workspace:FindPartOnRay(ray)
-						if part and part.CanCollide then
-							local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-							print("need to crouch :)")
-						end
-
-						Humanoid:MoveTo(waypoint.Position)
-						if waypoint.Action == Enum.PathWaypointAction.Jump then
-							Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-						end
-
-						local a = Instance.new("Part", workspace)
-						a.Shape = Enum.PartType.Ball
-						a.Position = waypoint.Position
-						a.BrickColor = BrickColor.new("Pink")
-						a.Material = Enum.Material.Neon
-						a.Size = Vector3.new(2,2,2)
-						a.Anchored = true
-						a.CanCollide = false
-						local touch = false
-
-						spawn(function()
-							a.Touched:Connect(function(hit)
-								if hit.Parent:FindFirstChild("Humanoid") then
-									if hit.Parent.Name == game.Players.LocalPlayer.Character.Name then
-										touch = true
-										a:remove()
-									end
-								end
-							end)
-							wait(10)
-							a:remove()
-						end)
-						repeat
-							wait(0.05)
-						until touch
-					end
-					break
-				end
-			end
-		end
-	end
+    while wait(3) do
+        if autoplaytoggle then
+            local beast = getBeast()
+            local map = game.ReplicatedStorage.CurrentMap.Value
+            local mapstuff = map:getChildren()
+            for i=1,#mapstuff do
+                if mapstuff[i].Name == "SingleDoor" or mapstuff[i].Name == "DoubleDoor" then
+                    for _,dp in ipairs(mapstuff[i]:getDescendants()) do
+                        if dp.ClassName == "Part" and dp.Name ~= "Frame" then
+                            if not dp:findFirstChild("PathfindingModifier") then
+                                local a = Instance.new("PathfindingModifier", dp)
+                                a.PassThrough = true
+                            end
+                        end
+                        if dp.Name == "Frame" then
+                            local a = Instance.new("PathfindingModifier", dp)
+                            a.PassThrough = false
+                            a.Label = "avoid"
+                        end
+                    end
+                end
+            end
+            local pcs = getBestPC()
+            local PathfindingService = game:GetService("PathfindingService")
+            local Humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+            local Root = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+            local agentParams = {
+                AgentRadius = 2.4, AgentHeight = 2, AgentCanJump = true,
+                AgentWalkableClimb = 4, WaypointSpacing = 2,
+                Costs = { avoid = 10.0 }
+            }
+            local beastNearby = ((game.Players.LocalPlayer.Character.HumanoidRootPart.Position - beast.Character:findFirstChild("HumanoidRootPart").Position).magnitude < 50)
+            for i, pc in ipairs(pcs) do
+                if isPlayerTyping() and not beastNearby then break end
+                local goal = pc.pc["ComputerTrigger1"].Position
+                local path = PathfindingService:CreatePath(agentParams)
+                path:ComputeAsync(Root.Position, goal)
+                if path.Status == Enum.PathStatus.Success then
+                    for _, waypoint in ipairs(path:GetWaypoints()) do
+                        Humanoid:MoveTo(waypoint.Position)
+                        if waypoint.Action == Enum.PathWaypointAction.Jump then
+                            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                        end
+                        local a = Instance.new("Part", workspace)
+                        a.Shape = Enum.PartType.Ball
+                        a.Position = waypoint.Position
+                        a.BrickColor = BrickColor.new("Pink")
+                        a.Material = Enum.Material.Neon
+                        a.Size = Vector3.new(2,2,2)
+                        a.Anchored = true
+                        a.CanCollide = false
+                        local touch = false
+                        spawn(function()
+                            a.Touched:Connect(function(hit)
+                                if hit.Parent:FindFirstChild("Humanoid") and hit.Parent.Name == game.Players.LocalPlayer.Character.Name then
+                                    touch = true; a:remove()
+                                end
+                            end)
+                            wait(10); a:remove()
+                        end)
+                        repeat wait(0.05) until touch
+                    end
+                    break
+                end
+            end
+        end
+    end
 end)
