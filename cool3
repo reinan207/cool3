@@ -57,7 +57,7 @@ FTFHAX.IgnoreGuiInset = true
 FTFHAX.DisplayOrder = 1000
 
 pcall(function()
-    FTFHAX.Parent = game:GetService("CoreGui")
+	FTFHAX.Parent = game:GetService("CoreGui")
 end)
 
 MenusTabFrame.Name = "MenusTabFrame"
@@ -618,23 +618,76 @@ ViewportFrame.BackgroundTransparency = 0.9
 ViewportFrame.Visible = false
 
 
-CheatButton.MouseButton1Down:Connect(function()
-	ESPMenuWindow.Visible = false
-	ToolsMenuWindow.Visible = false
-	MainMenuWindow.Visible = not MainMenuWindow.Visible
-end)
+-- SUBSTITUA O BLOCO DE DRAG ANTIGO POR ESTE
+-- coloque exatamente após: ViewportFrame.Visible = false
 
-CloseButton_2.MouseButton1Down:Connect(function()
+do
+	local UIS = game:GetService("UserInputService")
+
+	local dragging = false
+	local dragged = false
+	local dragStart
+	local startPos
+
+	CheatButton.MouseButton1Down:Connect(function()
+		dragging = true
+		dragged = false
+
+		dragStart = UIS:GetMouseLocation()
+		startPos = MenusTabFrame.Position
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragged = true
+
+			local mousePos = UIS:GetMouseLocation()
+			local delta = mousePos - dragStart
+
+			MenusTabFrame.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+
+	CheatButton.MouseButton1Up:Connect(function()
+		if not dragged then
+			ESPMenuWindow.Visible = false
+			ToolsMenuWindow.Visible = false
+			MainMenuWindow.Visible = not MainMenuWindow.Visible
+		end
+	end)
+end
+
+
+-- FIX PARA O BOTÃO X FECHAR DE QUALQUER TELA
+CloseButton_2.MouseButton1Click:Connect(function()
 	MainMenuWindow.Visible = false
-end)
-
-CloseButton.MouseButton1Down:Connect(function()
 	ESPMenuWindow.Visible = false
-end)
-
-CloseButton_3.MouseButton1Down:Connect(function()
 	ToolsMenuWindow.Visible = false
 end)
+
+CloseButton.MouseButton1Click:Connect(function()
+	MainMenuWindow.Visible = false
+	ESPMenuWindow.Visible = false
+	ToolsMenuWindow.Visible = false
+end)
+
+CloseButton_3.MouseButton1Click:Connect(function()
+	MainMenuWindow.Visible = false
+	ESPMenuWindow.Visible = false
+	ToolsMenuWindow.Visible = false
+end)
+
 
 BackButton.MouseButton1Down:Connect(function()
 	ESPMenuWindow.Visible = false
@@ -668,7 +721,6 @@ local bestpctoggle = false
 local exitstoggle = false
 local beastcamtoggle = false
 
-
 local neverfailtoggle = false
 local autointeracttoggle = false
 local autoplaytoggle = false
@@ -698,7 +750,6 @@ PCESPButton.MouseButton1Down:Connect(function()
 	end
 end)
 
-
 PlayerESPButton.MouseButton1Down:Connect(function()
 	if playertoggle == false then
 		playertoggle = true
@@ -710,7 +761,6 @@ PlayerESPButton.MouseButton1Down:Connect(function()
 		reloadESP()
 	end
 end)
-
 
 BestPCESPButton.MouseButton1Down:Connect(function()
 	if bestpctoggle == false then
@@ -756,7 +806,6 @@ AutoInteractButton.MouseButton1Down:Connect(function()
 	end
 end)
 
-
 BeastCamButton.MouseButton1Down:Connect(function()
 	if beastcamtoggle == false then
 		beastcamtoggle = true
@@ -770,8 +819,6 @@ BeastCamButton.MouseButton1Down:Connect(function()
 		BeastCamButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
 	end
 end)
-
-
 
 AutoPlayButton.MouseButton1Down:Connect(function()
 	if autoplaytoggle == false then
@@ -796,8 +843,8 @@ function reloadESP()
 				if pctoggle and not mapstuff[i]:findFirstChild("Highlight") then
 					local a = Instance.new("Highlight", mapstuff[i])
 					a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-					a.FillColor = Color3.fromRGB(13, 105, 172) -- avoid display bugs as soon as loads :)
-					a.OutlineColor = Color3.fromRGB(20, 165, 270) -- avoid display bugs as soon as loads :)
+					a.FillColor = Color3.fromRGB(13, 105, 172)
+					a.OutlineColor = Color3.fromRGB(20, 165, 270)
 					spawn(function()
 						repeat 
 							if bestpctoggle and mapstuff[i]:findFirstChild("Screen") then
@@ -839,8 +886,8 @@ function reloadESP()
 					a.OutlineColor = Color3.fromRGB(255,255,160)
 				end
 			end
-			end
-			end
+		end
+		end
 	end)
 	local player = game.Players:GetChildren()
 	for i=1, #player do
@@ -852,8 +899,8 @@ function reloadESP()
 		if playertoggle and not character:findFirstChild("Highlight") then
 			local a = Instance.new("Highlight", character)
 			a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			a.FillColor = Color3.fromRGB(0,255,0) -- avoid display bugs as soon as loads :)
-			a.OutlineColor = Color3.fromRGB(127,255,127) -- avoid display bugs as soon as loads :)
+			a.FillColor = Color3.fromRGB(0,255,0)
+			a.OutlineColor = Color3.fromRGB(127,255,127)
 			spawn(function()
 				repeat
 					wait(0.1)
@@ -934,20 +981,15 @@ function reloadBeastCam()
 							players[i].Character.Archivable = true
 							local dummyclone = players[i].Character:clone()
 							local bodyparts = dummyclone:getDescendants()
-
 							for i=1,#bodyparts do
 								if bodyparts[i].ClassName == "Sound" or bodyparts[i].ClassName == "LocalScript" or bodyparts[i].ClassName == "Script" then
 									bodyparts[i]:remove() 
 								end
 							end
-							
-							
 							dummyclone.Parent = dummy
-							
 						end
 					end
 				end
-
 
 				wait(0.3)
 
@@ -971,7 +1013,6 @@ end
 function getBestPC()
     local beast = getBeast()
     local pcs = {}
-
     local map = game.ReplicatedStorage.CurrentMap.Value
     if map ~= nil then
         local mapstuff = map:getChildren()
@@ -984,44 +1025,41 @@ function getBestPC()
             end
         end
     end
-
     table.sort(pcs, function(a, b) return a.magnitude > b.magnitude end)
     return pcs
 end
 
 function isPlayerTyping()
-local hum = game.Players.LocalPlayer.Character:findFirstChildOfClass("Humanoid")
-local anims = hum:GetPlayingAnimationTracks()
-for i=1,#anims do
-if anims[i].Name == "AnimTyping" then
-return true
-end
-end
-return false
+	local hum = game.Players.LocalPlayer.Character:findFirstChildOfClass("Humanoid")
+	local anims = hum:GetPlayingAnimationTracks()
+	for i=1,#anims do
+		if anims[i].Name == "AnimTyping" then
+			return true
+		end
+	end
+	return false
 end
 
-spawn(function() -- reload esp when new map
+spawn(function()
 	game.ReplicatedStorage.CurrentMap.Changed:Connect(function()
-		wait(5) -- hopefully enough time for map to load ;)
+		wait(5)
 		reloadESP()
 		if beastcamtoggle then
-		reloadBeastCam()	
+			reloadBeastCam()	
 		end
 	end)
 end)
 
-spawn(function() -- reload esp when game becomes active
+spawn(function()
 	game.ReplicatedStorage.IsGameActive.Changed:Connect(function()
 		reloadESP()
 		if beastcamtoggle then
-		reloadBeastCam()	
+			reloadBeastCam()	
 		end
 	end)
 end)
 
-
-
-spawn(function() --reload esp when character loads/deloads
+spawn(function()
 	game:GetService("Players").PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
 			reloadESP()
@@ -1032,7 +1070,7 @@ spawn(function() --reload esp when character loads/deloads
 	end)
 end)
 
-spawn(function() -- never fail hacking
+spawn(function()
 	local mt = getrawmetatable(game)
 	local old = mt.__namecall
 	setreadonly(mt,false)
@@ -1045,127 +1083,124 @@ spawn(function() -- never fail hacking
 	end)
 end)
 
-spawn(function() -- auto interact
+spawn(function()
+	while true do
+		wait()
+		if neverfailtoggle == true then
+			game.ReplicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
+		end
+	end
+end)
+
+spawn(function()
 	game.Players.LocalPlayer.PlayerGui.ScreenGui.ActionBox:GetPropertyChangedSignal("Visible"):connect(function()
 		if autointeracttoggle then
 			game.ReplicatedStorage.RemoteEvent:FireServer("Input", "Action", true)
 		end	
+	end)
 end)
-end)
-
-spawn(function() -- auto play (buggy and still testing :))
-	while wait(3) do
-		if autoplaytoggle then	
-			
-
-local beast = getBeast()
-local map = game.ReplicatedStorage.CurrentMap.Value
-local mapstuff = map:getChildren()
-for i=1,#mapstuff do
-if mapstuff[i].Name == "SingleDoor" or mapstuff[i].Name == "DoubleDoor" then
-local doorParts = mapstuff[i]:getDescendants()
-for i=1,#doorParts do
-if doorParts[i].ClassName == "Part" and doorParts[i].Name ~= "Frame" then
-if not doorParts[i]:findFirstChild("PathfindingModifier") then
-local a = Instance.new("PathfindingModifier", doorParts[i])
-a.PassThrough = true
-end
-if doorParts[i].Name == "Frame" then
-local a = Instance.new("PathfindingModifier", doorParts[i])
-a.PassThrough = false
-a.Label = "avoid"
-end
-end
-end
-end
-end
-
-
-local pcs = getBestPC()
-local PathfindingService = game:GetService("PathfindingService")
-local Humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
-local Root = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-local goal = nil
-local agentParams = {
-AgentRadius = 2.4,
-AgentHeight = 2,
-AgentCanJump = true,
-AgentWalkableClimb = 4,
-WaypointSpacing = 2,
-Costs = {
-avoid = 10.0
-}
-}
-
-
-local beastNearby = ((game.Players.LocalPlayer.Character.HumanoidRootPart.Position - beast.Character:findFirstChild("HumanoidRootPart").Position).magnitude < 50)
-for i, pc in ipairs(pcs) do
-if beastNearby then
-print("beast nearby")
-end
-
-
-if isPlayerTyping() and not beastNearby then
-break
-end
-				
-				
-goal = pc.pc["ComputerTrigger1"].Position
-local goalpc = pc.pc
-local path = PathfindingService:CreatePath(agentParams)
-
-path:ComputeAsync(Root.Position, goal)
-print(path.Status)
-if path.Status == Enum.PathStatus.Success then
-local waypoints = path:GetWaypoints()
-for i, waypoint in ipairs(waypoints) do
-
-local ray = Ray.new(waypoints[i].Position, Vector3.new(0, 1, 0) * 3)
-local part = workspace:FindPartOnRay(ray)
-if part and part.CanCollide then
-local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-print("need to crouch :)")
-end
-
-
-
-Humanoid:MoveTo(waypoint.Position)
-if waypoint.Action == Enum.PathWaypointAction.Jump then
-Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-end
-
-local a = Instance.new("Part", workspace)
-a.Shape = Enum.PartType.Ball
-a.Position = waypoint.Position
-a.BrickColor = BrickColor.new("Pink")
-a.Material = Enum.Material.Neon
-a.Size = Vector3.new(2,2,2)
-a.Anchored = true
-a.CanCollide = false
-local touch = false
 
 spawn(function()
-a.Touched:Connect(function(hit)
-if hit.Parent:FindFirstChild("Humanoid") then
-if hit.Parent.Name == game.Players.LocalPlayer.Character.Name then
-touch = true
-a:remove()
-end
-end
-end)
-wait(10)
-a:remove()
-end)
-repeat
-wait(0.05)
-until touch
-end
-break
-end
-end
-				
-				
-				
+	while wait(3) do
+		if autoplaytoggle then	
+			local beast = getBeast()
+			local map = game.ReplicatedStorage.CurrentMap.Value
+			local mapstuff = map:getChildren()
+			for i=1,#mapstuff do
+				if mapstuff[i].Name == "SingleDoor" or mapstuff[i].Name == "DoubleDoor" then
+					local doorParts = mapstuff[i]:getDescendants()
+					for i=1,#doorParts do
+						if doorParts[i].ClassName == "Part" and doorParts[i].Name ~= "Frame" then
+							if not doorParts[i]:findFirstChild("PathfindingModifier") then
+								local a = Instance.new("PathfindingModifier", doorParts[i])
+								a.PassThrough = true
+							end
+							if doorParts[i].Name == "Frame" then
+								local a = Instance.new("PathfindingModifier", doorParts[i])
+								a.PassThrough = false
+								a.Label = "avoid"
+							end
+						end
+					end
+				end
+			end
+
+			local pcs = getBestPC()
+			local PathfindingService = game:GetService("PathfindingService")
+			local Humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+			local Root = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+			local goal = nil
+			local agentParams = {
+				AgentRadius = 2.4,
+				AgentHeight = 2,
+				AgentCanJump = true,
+				AgentWalkableClimb = 4,
+				WaypointSpacing = 2,
+				Costs = {
+					avoid = 10.0
+				}
+			}
+
+			local beastNearby = ((game.Players.LocalPlayer.Character.HumanoidRootPart.Position - beast.Character:findFirstChild("HumanoidRootPart").Position).magnitude < 50)
+			for i, pc in ipairs(pcs) do
+				if beastNearby then
+					print("beast nearby")
+				end
+
+				if isPlayerTyping() and not beastNearby then
+					break
+				end
+
+				goal = pc.pc["ComputerTrigger1"].Position
+				local goalpc = pc.pc
+				local path = PathfindingService:CreatePath(agentParams)
+
+				path:ComputeAsync(Root.Position, goal)
+				print(path.Status)
+				if path.Status == Enum.PathStatus.Success then
+					local waypoints = path:GetWaypoints()
+					for i, waypoint in ipairs(waypoints) do
+						local ray = Ray.new(waypoints[i].Position, Vector3.new(0, 1, 0) * 3)
+						local part = workspace:FindPartOnRay(ray)
+						if part and part.CanCollide then
+							local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+							print("need to crouch :)")
+						end
+
+						Humanoid:MoveTo(waypoint.Position)
+						if waypoint.Action == Enum.PathWaypointAction.Jump then
+							Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						end
+
+						local a = Instance.new("Part", workspace)
+						a.Shape = Enum.PartType.Ball
+						a.Position = waypoint.Position
+						a.BrickColor = BrickColor.new("Pink")
+						a.Material = Enum.Material.Neon
+						a.Size = Vector3.new(2,2,2)
+						a.Anchored = true
+						a.CanCollide = false
+						local touch = false
+
+						spawn(function()
+							a.Touched:Connect(function(hit)
+								if hit.Parent:FindFirstChild("Humanoid") then
+									if hit.Parent.Name == game.Players.LocalPlayer.Character.Name then
+										touch = true
+										a:remove()
+									end
+								end
+							end)
+							wait(10)
+							a:remove()
+						end)
+						repeat
+							wait(0.05)
+						until touch
+					end
+					break
+				end
+			end
 		end
 	end
 end)
