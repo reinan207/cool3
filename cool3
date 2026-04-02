@@ -573,7 +573,7 @@ closeButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- drag manual apenas com botão esquerdo
+-- ================================================ -- DRAG -- ================================================
 do
     local dragging = false
     local dragStart
