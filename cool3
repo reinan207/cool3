@@ -573,7 +573,7 @@ closeButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- drag manual apenas com botão esquerdo
+-- drag manual apenas com botão esquerdo SPEED
 do
     local dragging = false
     local dragStart
@@ -686,7 +686,7 @@ local function refreshSpeedUI()
 end
 
 -- ================================================
--- DRAG
+-- DRAG ICONE
 -- ================================================
 do
     local UIS = game:GetService("UserInputService")
@@ -728,7 +728,6 @@ do
         end
     end)
 end
-
 -- ================================================
 -- NAVEGAÇÃO
 -- ================================================
