@@ -686,48 +686,9 @@ local function refreshSpeedUI()
 end
 
 -- ================================================
--- DRAG
+-- DRAG DO ICONE
 -- ================================================
-do
-    local UIS = game:GetService("UserInputService")
-    local dragging = false
-    local dragged = false
-    local dragStart
-    local startPos
 
-    CheatButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragged = false
-            dragStart = UIS:GetMouseLocation()
-            startPos = MenusTabFrame.Position
-        end
-    end)
-
-    CheatButton.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragged = true
-            local mousePos = UIS:GetMouseLocation()
-            local delta = mousePos - dragStart
-            MenusTabFrame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    CheatButton.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-            if not dragged then
-                ESPMenuWindow.Visible = false
-                ToolsMenuWindow.Visible = false
-                MainMenuWindow.Visible = not MainMenuWindow.Visible
-            end
-            dragged = false
-        end
-    end)
-end
 
 -- ================================================
 -- NAVEGAÇÃO
