@@ -716,18 +716,19 @@ do
         end
     end)
 
-    CheatButton.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-            if not dragged then
-                ESPMenuWindow.Visible = false
-                ToolsMenuWindow.Visible = false
-                MainMenuWindow.Visible = not MainMenuWindow.Visible
-            end
-            dragged = false
+    UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+
+        if not dragged then
+            MainMenuWindow.Visible = not MainMenuWindow.Visible
+            ESPMenuWindow.Visible = false
+            ToolsMenuWindow.Visible = false
         end
-    end)
-end
+
+        dragged = false
+    end
+end)
 
 -- ================================================
 -- NAVEGAÇÃO
