@@ -34,14 +34,197 @@ local function updateSpeed()
     end
 end
 
--- Hotkey T (funciona sem abrir o menu)
+-- Reconecta ao respawnar
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+    wait(1)
+    updateSpeed()
+end)
+
+-- ================================================
+-- FLY STATE
+-- ================================================
+local flyEnabled = false
+local flyBodyVelocity = nil
+local flyBodyGyro = nil
+local flyConnection = nil
+
+local function setFly(on)
+    flyEnabled = on
+    if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+    if flyBodyVelocity then flyBodyVelocity:Destroy(); flyBodyVelocity = nil end
+    if flyBodyGyro then flyBodyGyro:Destroy(); flyBodyGyro = nil end
+
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    local hum = character:FindFirstChildOfClass("Humanoid")
+    if not root then return end
+
+    if on then
+        if hum then hum.PlatformStand = true end
+        flyBodyVelocity = Instance.new("BodyVelocity")
+        flyBodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        flyBodyVelocity.Velocity = Vector3.zero
+        flyBodyVelocity.Parent = root
+
+        flyBodyGyro = Instance.new("BodyGyro")
+        flyBodyGyro.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+        flyBodyGyro.P = 9e3
+        flyBodyGyro.D = 80
+        flyBodyGyro.CFrame = root.CFrame
+        flyBodyGyro.Parent = root
+
+        flyConnection = RunService.Heartbeat:Connect(function()
+            if not flyBodyVelocity or not flyBodyVelocity.Parent then return end
+            local cam = workspace.CurrentCamera
+            local spd = 40
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then spd = spd * 2.5 end
+            local dir = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.yAxis end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then dir -= Vector3.yAxis end
+            flyBodyVelocity.Velocity = dir.Magnitude > 0 and dir.Unit * spd or Vector3.zero
+            flyBodyGyro.CFrame = cam.CFrame
+        end)
+    else
+        if hum then hum.PlatformStand = false end
+    end
+end
+
+-- Reconecta fly ao respawnar
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    flyEnabled = false
+    if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+    if flyBodyVelocity then flyBodyVelocity:Destroy(); flyBodyVelocity = nil end
+    if flyBodyGyro then flyBodyGyro:Destroy(); flyBodyGyro = nil end
+    if FlyButton then
+        FlyButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
+    end
+end)
+
+-- ================================================
+-- NOCLIP STATE
+-- ================================================
+local noclipEnabled = false
+local noclipConnection = nil
+local noclipOriginalCollide = {}
+
+local function saveCollideState()
+    noclipOriginalCollide = {}
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            noclipOriginalCollide[part] = part.CanCollide
+        end
+    end
+end
+
+local function restoreCollideState()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local original = noclipOriginalCollide[part]
+            if original ~= nil then
+                part.CanCollide = original
+            end
+        end
+    end
+    noclipOriginalCollide = {}
+end
+
+local function setNoclip(on)
+    noclipEnabled = on
+    if noclipConnection then noclipConnection:Disconnect(); noclipConnection = nil end
+    if on then
+        saveCollideState()
+        noclipConnection = RunService.Stepped:Connect(function()
+            local char = game.Players.LocalPlayer.Character
+            if not char then return end
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end)
+    else
+        restoreCollideState()
+    end
+end
+
+-- Reconecta noclip ao respawnar
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    noclipEnabled = false
+    noclipOriginalCollide = {}
+    if noclipConnection then noclipConnection:Disconnect(); noclipConnection = nil end
+    if NoclipButton then
+        NoclipButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
+    end
+end)
+
+-- ================================================
+-- SISTEMA DE NOTIFICAÇÃO (aparece 1 vez por hotkey)
+-- ================================================
+local shownHotkeyMsg = {}
+
+local notifGui = Instance.new("ScreenGui")
+notifGui.Name = "FTFNotif"
+notifGui.ResetOnSpawn = false
+notifGui.DisplayOrder = 9999
+pcall(function() notifGui.Parent = game:GetService("CoreGui") end)
+if not notifGui.Parent then
+    notifGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local function showNotif(msg)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 280, 0, 44)
+    frame.Position = UDim2.new(0.5, -140, 0, 55)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BackgroundTransparency = 0.15
+    frame.BorderSizePixel = 0
+    frame.Parent = notifGui
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -12, 1, 0)
+    lbl.Position = UDim2.new(0, 6, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.Text = msg
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13
+    lbl.TextWrapped = true
+    lbl.Parent = frame
+
+    spawn(function()
+        wait(2.2)
+        for i = 1, 10 do
+            frame.BackgroundTransparency = 0.15 + (i * 0.085)
+            lbl.TextTransparency = i * 0.1
+            wait(0.05)
+        end
+        frame:Destroy()
+    end)
+end
+
+-- ================================================
+-- HOTKEYS GLOBAIS: T = Speed | F = Fly | N = Noclip
+-- ================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.T then
+    if gameProcessed then return end
+
+    -- SPEED [T]
+    if input.KeyCode == Enum.KeyCode.T then
         local character = game.Players.LocalPlayer.Character
         if character and character:FindFirstChild("Humanoid") then
             speedEnabled = not speedEnabled
             updateSpeed()
-            -- refreshSpeedUI é chamado depois que os elementos existem
             if SpeedLabel then
                 SpeedLabel.Text = "Speed: " .. speed .. (speedEnabled and " (ON)" or " (OFF)")
             end
@@ -53,14 +236,31 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
                 SpeedButton.BackgroundColor3 = speedEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
             end
         end
-    end
-end)
 
--- Reconecta ao respawnar
-game.Players.LocalPlayer.CharacterAdded:Connect(function()
-    if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
-    wait(1)
-    updateSpeed()
+    -- FLY [F]
+    elseif input.KeyCode == Enum.KeyCode.F then
+        flyEnabled = not flyEnabled
+        setFly(flyEnabled)
+        if FlyButton then
+            FlyButton.BackgroundColor3 = flyEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+        end
+        if not shownHotkeyMsg["fly"] then
+            shownHotkeyMsg["fly"] = true
+            showNotif("✈ Fly: F ativa/desativa  |  WASD+Q/E  |  SHIFT=turbo")
+        end
+
+    -- NOCLIP [N]
+    elseif input.KeyCode == Enum.KeyCode.N then
+        noclipEnabled = not noclipEnabled
+        setNoclip(noclipEnabled)
+        if NoclipButton then
+            NoclipButton.BackgroundColor3 = noclipEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+        end
+        if not shownHotkeyMsg["noclip"] then
+            shownHotkeyMsg["noclip"] = true
+            showNotif("👻 NoClip: N ativa/desativa")
+        end
+    end
 end)
 
 -- ================================================
@@ -364,7 +564,7 @@ PageTitleText.TextScaled = true
 PageTitleText.TextXAlignment = Enum.TextXAlignment.Left
 
 -- ================================================
--- TOOLS MENU WINDOW
+-- TOOLS MENU WINDOW  (com ScrollingFrame para botões)
 -- ================================================
 local ToolsMenuWindow = Instance.new("Frame")
 ToolsMenuWindow.Name = "ToolsMenuWindow"
@@ -397,16 +597,30 @@ TitleLabel_2.Text = "Tools"
 TitleLabel_2.TextColor3 = Color3.fromRGB(144, 255, 161)
 TitleLabel_2.TextScaled = true
 
+-- ScrollingFrame para os botões Tools (suporta scroll com mouse)
+local ToolsScroll = Instance.new("ScrollingFrame")
+ToolsScroll.Name = "ToolsScroll"
+ToolsScroll.Parent = Body_3
+ToolsScroll.BackgroundTransparency = 1
+ToolsScroll.BorderSizePixel = 0
+ToolsScroll.Position = UDim2.new(0, 5, 0, 38)
+ToolsScroll.Size = UDim2.new(1, -10, 1, -42)
+ToolsScroll.ScrollBarThickness = 6
+ToolsScroll.ScrollBarImageColor3 = Color3.fromRGB(144, 255, 161)
+ToolsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ToolsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ToolsScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+
 local ButtonsFrame_2 = Instance.new("Frame")
 ButtonsFrame_2.Name = "ButtonsFrame"
-ButtonsFrame_2.Parent = Body_3
+ButtonsFrame_2.Parent = ToolsScroll
 ButtonsFrame_2.BackgroundTransparency = 1
-ButtonsFrame_2.Position = UDim2.new(0, 5, 0, 45)
-ButtonsFrame_2.Size = UDim2.new(1, -10, -0.00555, 85)
+ButtonsFrame_2.Size = UDim2.new(1, -8, 0, 0)
+ButtonsFrame_2.AutomaticSize = Enum.AutomaticSize.Y
 
 local UIGridLayout_3 = Instance.new("UIGridLayout")
 UIGridLayout_3.Parent = ButtonsFrame_2
-UIGridLayout_3.FillDirection = Enum.FillDirection.Vertical
+UIGridLayout_3.FillDirection = Enum.FillDirection.Horizontal
 UIGridLayout_3.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UIGridLayout_3.SortOrder = Enum.SortOrder.LayoutOrder
 UIGridLayout_3.CellPadding = UDim2.new(0, 6, 0, 6)
@@ -426,14 +640,15 @@ local function makeToolBtn(name, text, order)
     return b
 end
 
-local NeverFailButton    = makeToolBtn("NeverFailButton",    "Never Fail",   0)
-local AutoPlayButton     = makeToolBtn("AutoPlayButton",     "Auto-Play",    1)
-local AutoInteractButton = makeToolBtn("AutoInteractButton", "Auto Interact",2)
-local BeastCamButton     = makeToolBtn("BeastCamButton",     "Beast Cam",    3)
--- *** NOVO BOTÃO SPEED ***
-SpeedButton              = makeToolBtn("SpeedButton",        "Speed [T]",    4)
+local NeverFailButton    = makeToolBtn("NeverFailButton",    "Never Fail",    0)
+local AutoPlayButton     = makeToolBtn("AutoPlayButton",     "Auto-Play",     1)
+local AutoInteractButton = makeToolBtn("AutoInteractButton", "Auto Interact", 2)
+local BeastCamButton     = makeToolBtn("BeastCamButton",     "Beast Cam",     3)
+SpeedButton              = makeToolBtn("SpeedButton",        "Speed [T]",     4)
+FlyButton                = makeToolBtn("FlyButton",          "Fly [F]",       5)
+NoclipButton             = makeToolBtn("NoclipButton",       "NoClip [N]",    6)
 
--- *** SPEED MENU — GUI original do segundo script, separada do FTFHAX ***
+-- *** SPEED MENU — GUI separada do FTFHAX ***
 local speedScreenGui = Instance.new("ScreenGui")
 speedScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 speedScreenGui.ResetOnSpawn = false
@@ -728,6 +943,7 @@ do
         end
     end)
 end
+
 -- ================================================
 -- NAVEGAÇÃO
 -- ================================================
@@ -762,9 +978,23 @@ ToolsButton.MouseButton1Down:Connect(function()
     MainMenuWindow.Visible = false
 end)
 
--- Botão Speed: abre/fecha o menu de speed (independente do FTFHAX)
+-- Botão Speed: abre/fecha o menu de speed
 SpeedButton.MouseButton1Down:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
+end)
+
+-- Botão Fly
+FlyButton.MouseButton1Down:Connect(function()
+    flyEnabled = not flyEnabled
+    setFly(flyEnabled)
+    FlyButton.BackgroundColor3 = flyEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+end)
+
+-- Botão NoClip
+NoclipButton.MouseButton1Down:Connect(function()
+    noclipEnabled = not noclipEnabled
+    setNoclip(noclipEnabled)
+    NoclipButton.BackgroundColor3 = noclipEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
 end)
 
 -- ================================================
