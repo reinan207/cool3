@@ -312,6 +312,32 @@ TextLabel.TextWrapped = true
 TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
 
 -- ================================================
+-- BOTÃO RESTART ESP (abaixo do ícone ~1cm)
+-- ================================================
+local RestartESPButton = Instance.new("TextButton")
+RestartESPButton.Name = "RestartESPButton"
+RestartESPButton.Parent = MenusTabFrame
+RestartESPButton.AnchorPoint = Vector2.new(0.5, 0)
+-- Posicionado ~1cm abaixo do CheatButton (que começa em Y=1 do frame e tem tamanho 1x1 do frame)
+-- O CheatButton ocupa de Y=1 a Y=2 (em escala relativa ao MenusTabFrame)
+-- 1cm ≈ 38px de offset abaixo do fim do CheatButton
+RestartESPButton.Position = UDim2.new(0.5, 0, 2, 4)
+RestartESPButton.Size = UDim2.new(1, 4, 0, 22)
+RestartESPButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+RestartESPButton.BackgroundTransparency = 0.25
+RestartESPButton.BorderSizePixel = 0
+RestartESPButton.ZIndex = 5
+RestartESPButton.Text = "RESTART ESP"
+RestartESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RestartESPButton.Font = Enum.Font.GothamBold
+RestartESPButton.TextScaled = true
+RestartESPButton.TextWrapped = true
+
+local restartCorner = Instance.new("UICorner")
+restartCorner.CornerRadius = UDim.new(0, 5)
+restartCorner.Parent = RestartESPButton
+
+-- ================================================
 -- MAIN MENU WINDOW
 -- ================================================
 local MainMenuWindow = Instance.new("Frame")
@@ -1074,6 +1100,55 @@ BeastCamButton.MouseButton1Down:Connect(function()
 end)
 AutoPlayButton.MouseButton1Down:Connect(function()
     autoplaytoggle = not autoplaytoggle; toggleBtn(AutoPlayButton, autoplaytoggle)
+end)
+
+-- ================================================
+-- LÓGICA DO BOTÃO RESTART ESP
+-- Remove todos os highlights ativos, aguarda um frame
+-- e relliga apenas os ESPs que estavam habilitados,
+-- preservando os que estavam desligados.
+-- ================================================
+RestartESPButton.MouseButton1Click:Connect(function()
+    -- Feedback visual rápido
+    RestartESPButton.Text = "REINICIANDO..."
+    RestartESPButton.TextColor3 = Color3.fromRGB(255, 220, 80)
+
+    spawn(function()
+        -- Salva quais ESPs estão ativos no momento do clique
+        local wasPlayer   = playertoggle
+        local wasPods     = podstoggle
+        local wasPC       = pctoggle
+        local wasBestPC   = bestpctoggle
+        local wasExits    = exitstoggle
+
+        -- Desliga todos os ESPs ativos temporariamente
+        if wasPlayer   then playertoggle  = false end
+        if wasPods     then podstoggle    = false end
+        if wasPC       then pctoggle      = false end
+        if wasBestPC   then bestpctoggle  = false end
+        if wasExits    then exitstoggle   = false end
+
+        -- Chama reloadESP com tudo falso para remover os Highlights
+        reloadESP()
+
+        wait(0.35)
+
+        -- Restaura apenas os que estavam ativos
+        if wasPlayer   then playertoggle  = true end
+        if wasPods     then podstoggle    = true end
+        if wasPC       then pctoggle      = true end
+        if wasBestPC   then bestpctoggle  = true end
+        if wasExits    then exitstoggle   = true end
+
+        -- Relliga o ESP com os toggles restaurados
+        reloadESP()
+
+        wait(0.2)
+
+        -- Restaura visual do botão
+        RestartESPButton.Text = "RESTART ESP"
+        RestartESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
 end)
 
 -- ================================================
