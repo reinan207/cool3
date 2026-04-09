@@ -1,7 +1,7 @@
-local ver = "v0.3.5"
+local ver = "v0.0.1"
 
 -- ================================================
--- SPEED HACK STATE (funciona com ou sem abrir o menu)
+-- SPEED HACK STATE
 -- ================================================
 local speed = 41
 local speedEnabled = false
@@ -34,7 +34,6 @@ local function updateSpeed()
     end
 end
 
--- Reconecta ao respawnar
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
     wait(1)
@@ -95,7 +94,6 @@ local function setFly(on)
     end
 end
 
--- Reconecta fly ao respawnar
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     flyEnabled = false
     if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
@@ -157,7 +155,6 @@ local function setNoclip(on)
     end
 end
 
--- Reconecta noclip ao respawnar
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     noclipEnabled = false
     noclipOriginalCollide = {}
@@ -168,12 +165,12 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 -- ================================================
--- SISTEMA DE NOTIFICAÇÃO (aparece 1 vez por hotkey)
+-- SISTEMA DE NOTIFICAÇÃO
 -- ================================================
 local shownHotkeyMsg = {}
 
 local notifGui = Instance.new("ScreenGui")
-notifGui.Name = "FTFNotif"
+notifGui.Name = "FTF MENUNotif"
 notifGui.ResetOnSpawn = false
 notifGui.DisplayOrder = 9999
 pcall(function() notifGui.Parent = game:GetService("CoreGui") end)
@@ -214,66 +211,15 @@ local function showNotif(msg)
 end
 
 -- ================================================
--- HOTKEYS GLOBAIS: T = Speed | F = Fly | N = Noclip
--- ================================================
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    -- SPEED [T]
-    if input.KeyCode == Enum.KeyCode.T then
-        local character = game.Players.LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            speedEnabled = not speedEnabled
-            updateSpeed()
-            if SpeedLabel then
-                SpeedLabel.Text = "Speed: " .. speed .. (speedEnabled and " (ON)" or " (OFF)")
-            end
-            if SpeedToggleButton then
-                SpeedToggleButton.Text = speedEnabled and "On" or "Off"
-                SpeedToggleButton.BackgroundColor3 = speedEnabled and Color3.new(0, 0.7, 0) or Color3.new(0.3, 0.3, 0.3)
-            end
-            if SpeedButton then
-                SpeedButton.BackgroundColor3 = speedEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
-            end
-        end
-
-    -- FLY [F]
-    elseif input.KeyCode == Enum.KeyCode.F then
-        flyEnabled = not flyEnabled
-        setFly(flyEnabled)
-        if FlyButton then
-            FlyButton.BackgroundColor3 = flyEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
-        end
-        if not shownHotkeyMsg["fly"] then
-            shownHotkeyMsg["fly"] = true
-            showNotif("✈ Fly: F ativa/desativa  |  WASD+Q/E  |  SHIFT=turbo")
-        end
-
-    -- NOCLIP [N]
-    elseif input.KeyCode == Enum.KeyCode.N then
-        noclipEnabled = not noclipEnabled
-        setNoclip(noclipEnabled)
-        if NoclipButton then
-            NoclipButton.BackgroundColor3 = noclipEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
-        end
-        if not shownHotkeyMsg["noclip"] then
-            shownHotkeyMsg["noclip"] = true
-            showNotif("👻 NoClip: N ativa/desativa")
-        end
-    end
-end)
-
--- ================================================
 -- GUI
 -- ================================================
 local FTFHAX = Instance.new("ScreenGui")
 FTFHAX.IgnoreGuiInset = true
 FTFHAX.DisplayOrder = 1000
 FTFHAX.ResetOnSpawn = false
-FTFHAX.Name = "FTFHAX"
+FTFHAX.Name = "FTF MENU"
 pcall(function() FTFHAX.Parent = game:GetService("CoreGui") end)
 
--- MenusTabFrame
 local MenusTabFrame = Instance.new("Frame")
 MenusTabFrame.Name = "MenusTabFrame"
 MenusTabFrame.Parent = FTFHAX
@@ -304,23 +250,17 @@ TextLabel.BackgroundTransparency = 1
 TextLabel.Position = UDim2.new(0, 0, 1, 0)
 TextLabel.Size = UDim2.new(1, 0, 0.2, 0)
 TextLabel.Font = Enum.Font.ArialBold
-TextLabel.Text = "ftfhax"
+TextLabel.Text = "FTF MENU"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.TextScaled = true
 TextLabel.TextStrokeTransparency = 0
 TextLabel.TextWrapped = true
 TextLabel.TextYAlignment = Enum.TextYAlignment.Bottom
 
--- ================================================
--- BOTÃO RESTART ESP (abaixo do ícone ~1cm)
--- ================================================
 local RestartESPButton = Instance.new("TextButton")
 RestartESPButton.Name = "RestartESPButton"
 RestartESPButton.Parent = MenusTabFrame
 RestartESPButton.AnchorPoint = Vector2.new(0.5, 0)
--- Posicionado ~1cm abaixo do CheatButton (que começa em Y=1 do frame e tem tamanho 1x1 do frame)
--- O CheatButton ocupa de Y=1 a Y=2 (em escala relativa ao MenusTabFrame)
--- 1cm ≈ 38px de offset abaixo do fim do CheatButton
 RestartESPButton.Position = UDim2.new(0.5, 0, 2, 4)
 RestartESPButton.Size = UDim2.new(1, 4, 0, 22)
 RestartESPButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -332,10 +272,7 @@ RestartESPButton.TextColor3 = Color3.fromRGB(149, 255, 237)
 RestartESPButton.Font = Enum.Font.GothamBold
 RestartESPButton.TextScaled = true
 RestartESPButton.TextWrapped = true
-
-local restartCorner = Instance.new("UICorner")
-restartCorner.CornerRadius = UDim.new(0, 5)
-restartCorner.Parent = RestartESPButton
+Instance.new("UICorner", RestartESPButton).CornerRadius = UDim.new(0, 5)
 
 -- ================================================
 -- MAIN MENU WINDOW
@@ -392,7 +329,7 @@ PageTitleText_2.BackgroundTransparency = 1
 PageTitleText_2.Position = UDim2.new(0, 10, 0, 0)
 PageTitleText_2.Size = UDim2.new(0.5, 0, 0, 40)
 PageTitleText_2.ZIndex = 5
-PageTitleText_2.Text = "ftfhax"
+PageTitleText_2.Text = "FTF MENU"
 PageTitleText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
 PageTitleText_2.TextScaled = true
 PageTitleText_2.TextXAlignment = Enum.TextXAlignment.Left
@@ -584,13 +521,13 @@ PageTitleText.BackgroundTransparency = 1
 PageTitleText.Position = UDim2.new(0, 10, 0, 0)
 PageTitleText.Size = UDim2.new(0.5, 0, 0, 40)
 PageTitleText.ZIndex = 5
-PageTitleText.Text = "ftfhax"
+PageTitleText.Text = "FTF MENU"
 PageTitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 PageTitleText.TextScaled = true
 PageTitleText.TextXAlignment = Enum.TextXAlignment.Left
 
 -- ================================================
--- TOOLS MENU WINDOW  (com ScrollingFrame para botões)
+-- TOOLS MENU WINDOW
 -- ================================================
 local ToolsMenuWindow = Instance.new("Frame")
 ToolsMenuWindow.Name = "ToolsMenuWindow"
@@ -623,7 +560,6 @@ TitleLabel_2.Text = "Tools"
 TitleLabel_2.TextColor3 = Color3.fromRGB(144, 255, 161)
 TitleLabel_2.TextScaled = true
 
--- ScrollingFrame para os botões Tools (suporta scroll com mouse)
 local ToolsScroll = Instance.new("ScrollingFrame")
 ToolsScroll.Name = "ToolsScroll"
 ToolsScroll.Parent = Body_3
@@ -674,7 +610,7 @@ SpeedButton              = makeToolBtn("SpeedButton",        "Speed [T]",     4)
 FlyButton                = makeToolBtn("FlyButton",          "Fly [F]",       5)
 NoclipButton             = makeToolBtn("NoclipButton",       "NoClip [N]",    6)
 
--- *** SPEED MENU — GUI separada do FTFHAX ***
+-- *** SPEED MENU ***
 local speedScreenGui = Instance.new("ScreenGui")
 speedScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 speedScreenGui.ResetOnSpawn = false
@@ -795,7 +731,6 @@ SpeedDecButton.Text = "<"
 SpeedDecButton.Font = Enum.Font.GothamBold
 SpeedDecButton.Parent = mainFrame
 
--- minimize logic original
 local guiVisible = true
 minimizeButton.MouseButton1Click:Connect(function()
     guiVisible = not guiVisible
@@ -814,12 +749,10 @@ closeButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- drag manual apenas com botão esquerdo SPEED
 do
     local dragging = false
     local dragStart
     local startPos
-
     titleFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -832,7 +765,6 @@ do
             end)
         end
     end)
-
     titleFrame.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
@@ -896,7 +828,7 @@ PageTitleText_3.BackgroundTransparency = 1
 PageTitleText_3.Position = UDim2.new(0, 10, 0, 0)
 PageTitleText_3.Size = UDim2.new(0.5, 0, 0, 40)
 PageTitleText_3.ZIndex = 5
-PageTitleText_3.Text = "ftfhax"
+PageTitleText_3.Text = "FTF MENU"
 PageTitleText_3.TextColor3 = Color3.fromRGB(255, 255, 255)
 PageTitleText_3.TextScaled = true
 PageTitleText_3.TextXAlignment = Enum.TextXAlignment.Left
@@ -988,7 +920,6 @@ end
 CloseButton_2.MouseButton1Click:Connect(closeAll)
 CloseButton.MouseButton1Click:Connect(closeAll)
 CloseButton_3.MouseButton1Click:Connect(closeAll)
-
 BackButton.MouseButton1Down:Connect(goBack)
 BackButton_2.MouseButton1Down:Connect(goBack)
 
@@ -1004,19 +935,16 @@ ToolsButton.MouseButton1Down:Connect(function()
     MainMenuWindow.Visible = false
 end)
 
--- Botão Speed: abre/fecha o menu de speed
 SpeedButton.MouseButton1Down:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
 end)
 
--- Botão Fly
 FlyButton.MouseButton1Down:Connect(function()
     flyEnabled = not flyEnabled
     setFly(flyEnabled)
     FlyButton.BackgroundColor3 = flyEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
 end)
 
--- Botão NoClip
 NoclipButton.MouseButton1Down:Connect(function()
     noclipEnabled = not noclipEnabled
     setNoclip(noclipEnabled)
@@ -1024,7 +952,7 @@ NoclipButton.MouseButton1Down:Connect(function()
 end)
 
 -- ================================================
--- SPEED MENU BUTTONS (lógica original do segundo script)
+-- SPEED MENU BUTTONS
 -- ================================================
 SpeedToggleButton.MouseButton1Click:Connect(function()
     speedEnabled = not speedEnabled
@@ -1047,7 +975,7 @@ SpeedDecButton.MouseButton1Click:Connect(function()
 end)
 
 -- ================================================
--- TOGGLES (ESP / TOOLS originais)
+-- TOGGLES
 -- ================================================
 local podstoggle      = false
 local pctoggle        = false
@@ -1078,7 +1006,6 @@ end)
 ExitsESPButton.MouseButton1Down:Connect(function()
     exitstoggle = not exitstoggle; toggleBtn(ExitsESPButton, exitstoggle); reloadESP()
 end)
-
 NeverFailButton.MouseButton1Down:Connect(function()
     neverfailtoggle = not neverfailtoggle; toggleBtn(NeverFailButton, neverfailtoggle)
 end)
@@ -1103,52 +1030,74 @@ AutoPlayButton.MouseButton1Down:Connect(function()
 end)
 
 -- ================================================
--- LÓGICA DO BOTÃO RESTART ESP
--- Remove todos os highlights ativos, aguarda um frame
--- e relliga apenas os ESPs que estavam habilitados,
--- preservando os que estavam desligados.
+-- RESTART ESP
 -- ================================================
 RestartESPButton.MouseButton1Click:Connect(function()
-    -- Feedback visual rápido
     RestartESPButton.Text = "REINICIANDO..."
     RestartESPButton.TextColor3 = Color3.fromRGB(255, 220, 80)
-
     spawn(function()
-        -- Salva quais ESPs estão ativos no momento do clique
-        local wasPlayer   = playertoggle
-        local wasPods     = podstoggle
-        local wasPC       = pctoggle
-        local wasBestPC   = bestpctoggle
-        local wasExits    = exitstoggle
-
-        -- Desliga todos os ESPs ativos temporariamente
-        if wasPlayer   then playertoggle  = false end
-        if wasPods     then podstoggle    = false end
-        if wasPC       then pctoggle      = false end
-        if wasBestPC   then bestpctoggle  = false end
-        if wasExits    then exitstoggle   = false end
-
-        -- Chama reloadESP com tudo falso para remover os Highlights
-        reloadESP()
-
-        wait(0.35)
-
-        -- Restaura apenas os que estavam ativos
-        if wasPlayer   then playertoggle  = true end
-        if wasPods     then podstoggle    = true end
-        if wasPC       then pctoggle      = true end
-        if wasBestPC   then bestpctoggle  = true end
-        if wasExits    then exitstoggle   = true end
-
-        -- Relliga o ESP com os toggles restaurados
-        reloadESP()
-
-        wait(0.2)
-
-        -- Restaura visual do botão
+        local wasPlayer = playertoggle; local wasPods = podstoggle
+        local wasPC = pctoggle; local wasBestPC = bestpctoggle; local wasExits = exitstoggle
+        if wasPlayer then playertoggle = false end; if wasPods then podstoggle = false end
+        if wasPC then pctoggle = false end; if wasBestPC then bestpctoggle = false end
+        if wasExits then exitstoggle = false end
+        reloadESP(); wait(0.35)
+        if wasPlayer then playertoggle = true end; if wasPods then podstoggle = true end
+        if wasPC then pctoggle = true end; if wasBestPC then bestpctoggle = true end
+        if wasExits then exitstoggle = true end
+        reloadESP(); wait(0.2)
         RestartESPButton.Text = "RESTART ESP"
         RestartESPButton.TextColor3 = Color3.fromRGB(149, 255, 237)
     end)
+end)
+
+-- ================================================
+-- HOTKEYS — definido AQUI, depois de todas as janelas
+-- B = abre/fecha menu | T = Speed | F = Fly | N = Noclip
+-- ================================================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.B then
+        -- Se ESP ou Tools estiver aberto, fecha e volta pro main
+        if ESPMenuWindow.Visible or ToolsMenuWindow.Visible then
+            ESPMenuWindow.Visible = false
+            ToolsMenuWindow.Visible = false
+            MainMenuWindow.Visible = false
+        else
+            MainMenuWindow.Visible = not MainMenuWindow.Visible
+        end
+
+    elseif input.KeyCode == Enum.KeyCode.T then
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            speedEnabled = not speedEnabled
+            updateSpeed()
+            refreshSpeedUI()
+        end
+
+    elseif input.KeyCode == Enum.KeyCode.F then
+        flyEnabled = not flyEnabled
+        setFly(flyEnabled)
+        if FlyButton then
+            FlyButton.BackgroundColor3 = flyEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+        end
+        if not shownHotkeyMsg["fly"] then
+            shownHotkeyMsg["fly"] = true
+            showNotif("✈ Fly: F ativa/desativa  |  WASD+Q/E  |  SHIFT=turbo")
+        end
+
+    elseif input.KeyCode == Enum.KeyCode.N then
+        noclipEnabled = not noclipEnabled
+        setNoclip(noclipEnabled)
+        if NoclipButton then
+            NoclipButton.BackgroundColor3 = noclipEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+        end
+        if not shownHotkeyMsg["noclip"] then
+            shownHotkeyMsg["noclip"] = true
+            showNotif("👻 NoClip: N ativa/desativa")
+        end
+    end
 end)
 
 -- ================================================
@@ -1167,7 +1116,6 @@ function reloadESP()
                     if pctoggle and not mapstuff[i]:findFirstChild("Highlight") then
                         local a = Instance.new("Highlight", mapstuff[i])
                         a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        -- Lê a cor da Screen imediatamente na criação
                         local screen = mapstuff[i]:findFirstChild("Screen")
                         if screen then
                             a.FillColor = screen.Color
@@ -1346,8 +1294,7 @@ end
 
 spawn(function()
     game.ReplicatedStorage.CurrentMap.Changed:Connect(function()
-        wait(5)
-        reloadESP()
+        wait(5); reloadESP()
         if beastcamtoggle then reloadBeastCam() end
     end)
 end)
