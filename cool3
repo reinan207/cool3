@@ -328,7 +328,7 @@ RestartESPButton.BackgroundTransparency = 0.25
 RestartESPButton.BorderSizePixel = 0
 RestartESPButton.ZIndex = 5
 RestartESPButton.Text = "RESTART ESP"
-RestartESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RestartESPButton.TextColor3 = Color3.fromRGB(149, 255, 237)
 RestartESPButton.Font = Enum.Font.GothamBold
 RestartESPButton.TextScaled = true
 RestartESPButton.TextWrapped = true
@@ -1147,7 +1147,7 @@ RestartESPButton.MouseButton1Click:Connect(function()
 
         -- Restaura visual do botão
         RestartESPButton.Text = "RESTART ESP"
-        RestartESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        RestartESPButton.TextColor3 = Color3.fromRGB(149, 255, 237)
     end)
 end)
 
@@ -1167,8 +1167,15 @@ function reloadESP()
                     if pctoggle and not mapstuff[i]:findFirstChild("Highlight") then
                         local a = Instance.new("Highlight", mapstuff[i])
                         a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        a.FillColor = Color3.fromRGB(13, 105, 172)
-                        a.OutlineColor = Color3.fromRGB(20, 165, 270)
+                        -- Lê a cor da Screen imediatamente na criação
+                        local screen = mapstuff[i]:findFirstChild("Screen")
+                        if screen then
+                            a.FillColor = screen.Color
+                            a.OutlineColor = Color3.fromRGB(a.FillColor.R*400, a.FillColor.G*400, a.FillColor.B*400)
+                        else
+                            a.FillColor = Color3.fromRGB(13, 105, 172)
+                            a.OutlineColor = Color3.fromRGB(20, 165, 270)
+                        end
                         spawn(function()
                             repeat
                                 if bestpctoggle and mapstuff[i]:findFirstChild("Screen") then
