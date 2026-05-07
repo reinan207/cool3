@@ -9,35 +9,64 @@ local speedConnection = nil
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local function applySpeed()
+-- ================================================
+-- ANTI-VOID
+-- ================================================
+local antiVoidEnabled = true
+local lastSafePosition = nil
+local antiVoidConnection = nil
+
+local function hasFloorBelow(position)
+    local rayOrigin = position
+    local rayDirection = Vector3.new(0, -10, 0)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
     local character = game.Players.LocalPlayer.Character
-    if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid.WalkSpeed = speedEnabled and speed or 16
+    if character then
+        raycastParams.FilterDescendantsInstances = {character}
     end
+    local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+    if result then
+        local hit = result.Instance
+        if hit:IsA("BasePart") and hit.CanCollide then
+            return true
+        end
+    end
+    return false
 end
 
-local function updateSpeed()
-    if speedConnection then
-        speedConnection:Disconnect()
-        speedConnection = nil
+local function startAntiVoid()
+    if antiVoidConnection then
+        antiVoidConnection:Disconnect()
+        antiVoidConnection = nil
     end
-    if speedEnabled then
-        applySpeed()
-        speedConnection = RunService.Heartbeat:Connect(function()
-            local char = game.Players.LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.WalkSpeed = speed
-            end
-        end)
-    else
-        applySpeed()
-    end
+    antiVoidConnection = RunService.Heartbeat:Connect(function()
+        if not antiVoidEnabled then return end
+        local character = game.Players.LocalPlayer.Character
+        if not character then return end
+        local root = character:FindFirstChild("HumanoidRootPart")
+        local hum = character:FindFirstChildOfClass("Humanoid")
+        if not root or not hum then return end
+        local pos = root.Position
+        if hasFloorBelow(pos) and pos.Y > -100 then
+            lastSafePosition = pos
+        end
+        local inVoid = pos.Y < -100
+        local noFloor = not hasFloorBelow(pos) and hum:GetState() == Enum.HumanoidStateType.Freefall
+        if (inVoid or noFloor) and lastSafePosition then
+            root.CFrame = CFrame.new(lastSafePosition + Vector3.new(0, 3, 0))
+            root.Velocity = Vector3.zero
+            root.AssemblyLinearVelocity = Vector3.zero
+        end
+    end)
 end
+
+startAntiVoid()
 
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
-    if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+    lastSafePosition = nil
     wait(1)
-    updateSpeed()
+    startAntiVoid()
 end)
 
 -- ================================================
@@ -162,6 +191,37 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
     if NoclipButton then
         NoclipButton.BackgroundColor3 = Color3.new(0.74902, 0, 0)
     end
+end)
+
+local function applySpeed()
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.WalkSpeed = speedEnabled and speed or 16
+    end
+end
+
+local function updateSpeed()
+    if speedConnection then
+        speedConnection:Disconnect()
+        speedConnection = nil
+    end
+    if speedEnabled then
+        applySpeed()
+        speedConnection = RunService.Heartbeat:Connect(function()
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.WalkSpeed = speed
+            end
+        end)
+    else
+        applySpeed()
+    end
+end
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+    wait(1)
+    updateSpeed()
 end)
 
 -- ================================================
@@ -609,6 +669,23 @@ local BeastCamButton     = makeToolBtn("BeastCamButton",     "Beast Cam",     3)
 SpeedButton              = makeToolBtn("SpeedButton",        "Speed [T]",     4)
 FlyButton                = makeToolBtn("FlyButton",          "Fly [F]",       5)
 NoclipButton             = makeToolBtn("NoclipButton",       "NoClip [N]",    6)
+local AntiVoidButton     = makeToolBtn("AntiVoidButton",     "Anti-Void",     7)
+
+-- Anti-Void começa verde (ativo)
+AntiVoidButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
+
+AntiVoidButton.MouseButton1Down:Connect(function()
+    antiVoidEnabled = not antiVoidEnabled
+    AntiVoidButton.BackgroundColor3 = antiVoidEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
+    if antiVoidEnabled then
+        startAntiVoid()
+    else
+        if antiVoidConnection then
+            antiVoidConnection:Disconnect()
+            antiVoidConnection = nil
+        end
+    end
+end)
 
 -- *** SPEED MENU ***
 local speedScreenGui = Instance.new("ScreenGui")
@@ -1052,14 +1129,12 @@ RestartESPButton.MouseButton1Click:Connect(function()
 end)
 
 -- ================================================
--- HOTKEYS — definido AQUI, depois de todas as janelas
--- B = abre/fecha menu | T = Speed | F = Fly | N = Noclip
+-- HOTKEYS
 -- ================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
 
     if input.KeyCode == Enum.KeyCode.B then
-        -- Se ESP ou Tools estiver aberto, fecha e volta pro main
         if ESPMenuWindow.Visible or ToolsMenuWindow.Visible then
             ESPMenuWindow.Visible = false
             ToolsMenuWindow.Visible = false
