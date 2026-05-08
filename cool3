@@ -8,31 +8,67 @@ local speedEnabled = false
 local speedConnection = nil
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-
+local scriptKilled = false
 -- ================================================
 -- ANTI-VOID
 -- ================================================
 local antiVoidEnabled = true
 local lastSafePosition = nil
 local antiVoidConnection = nil
+local fakePlatform = nil
+local fakePlatformY = nil
 
-local function hasFloorBelow(position)
+local function removeFakePlatform()
+    if fakePlatform and fakePlatform.Parent then
+        local old = fakePlatform
+        fakePlatform = nil
+        fakePlatformY = nil
+        old:Destroy()
+    end
+end
+
+local function createFakePlatform(atY)
+    removeFakePlatform()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    fakePlatformY = atY
+    fakePlatform = Instance.new("Part")
+    fakePlatform.Name = "FakeFloor"
+    fakePlatform.Size = Vector3.new(200, 1, 200)
+    fakePlatform.Anchored = true
+    fakePlatform.CanCollide = true
+    fakePlatform.Transparency = 1
+    fakePlatform.CFrame = CFrame.new(root.Position.X, fakePlatformY, root.Position.Z)
+    fakePlatform.Parent = workspace
+end
+
+local function hasRealFloorBelow(position)
     local rayOrigin = position
-    local rayDirection = Vector3.new(0, -10, 0)
+    local rayDirection = Vector3.new(0, -20, 0)
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Exclude
     local character = game.Players.LocalPlayer.Character
+    local excluded = {}
     if character then
-        raycastParams.FilterDescendantsInstances = {character}
+        for _, d in ipairs(character:GetDescendants()) do
+            table.insert(excluded, d)
+        end
+        table.insert(excluded, character)
     end
+    if fakePlatform then table.insert(excluded, fakePlatform) end
+    raycastParams.FilterDescendantsInstances = excluded
+
     local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-    if result then
-        local hit = result.Instance
-        if hit:IsA("BasePart") and hit.CanCollide then
-            return true
+    if result and result.Instance:IsA("BasePart") then
+        -- Se noclip está ativo, ignora o CanCollide e considera o chão como válido
+        if noclipEnabled or result.Instance.CanCollide then
+            return true, result.Position.Y
         end
     end
-    return false
+    return false, nil
 end
 
 local function startAntiVoid()
@@ -40,23 +76,45 @@ local function startAntiVoid()
         antiVoidConnection:Disconnect()
         antiVoidConnection = nil
     end
+
     antiVoidConnection = RunService.Heartbeat:Connect(function()
+        if scriptKilled then return end
         if not antiVoidEnabled then return end
+
         local character = game.Players.LocalPlayer.Character
         if not character then return end
         local root = character:FindFirstChild("HumanoidRootPart")
         local hum = character:FindFirstChildOfClass("Humanoid")
         if not root or not hum then return end
+
         local pos = root.Position
-        if hasFloorBelow(pos) and pos.Y > -100 then
-            lastSafePosition = pos
-        end
-        local inVoid = pos.Y < -100
-        local noFloor = not hasFloorBelow(pos) and hum:GetState() == Enum.HumanoidStateType.Freefall
-        if (inVoid or noFloor) and lastSafePosition then
+
+        -- Caiu no void real
+        if pos.Y < -100 and lastSafePosition then
+            removeFakePlatform()
             root.CFrame = CFrame.new(lastSafePosition + Vector3.new(0, 3, 0))
             root.Velocity = Vector3.zero
             root.AssemblyLinearVelocity = Vector3.zero
+            return
+        end
+
+        local hasFloor, floorY = hasRealFloorBelow(pos)
+
+        if hasFloor then
+            lastSafePosition = pos
+            removeFakePlatform()
+        else
+            if not fakePlatform or not fakePlatform.Parent then
+                -- Cria a plataforma na altura atual dos pés do personagem
+                createFakePlatform(pos.Y - 3)
+            else
+                -- Só move X e Z, NUNCA muda o Y (evita empurrar o boneco)
+                fakePlatform.CFrame = CFrame.new(
+                    pos.X,
+                    fakePlatformY, -- altura fixa!
+                    pos.Z
+                )
+            end
         end
     end)
 end
@@ -65,10 +123,10 @@ startAntiVoid()
 
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     lastSafePosition = nil
+    removeFakePlatform()
     wait(1)
     startAntiVoid()
 end)
-
 -- ================================================
 -- FLY STATE
 -- ================================================
@@ -393,7 +451,22 @@ PageTitleText_2.Text = "FTF MENU"
 PageTitleText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
 PageTitleText_2.TextScaled = true
 PageTitleText_2.TextXAlignment = Enum.TextXAlignment.Left
-
+-- ================================================
+-- Pressione [B] para abrir/fechar o painel
+-- ================================================
+local HintLabel = Instance.new("TextLabel")
+HintLabel.Parent = MainMenuWindow
+HintLabel.BackgroundTransparency = 1
+HintLabel.Position = UDim2.new(0, 0, 0, 40)
+HintLabel.Size = UDim2.new(1, 0, 0, 22)
+HintLabel.ZIndex = 5
+HintLabel.Text = "Pressione [B] para abrir/fechar o painel"
+HintLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+HintLabel.Font = Enum.Font.Gotham
+HintLabel.TextScaled = true
+HintLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+HintLabel.BackgroundTransparency = 0.4
+-- ================================================
 local Body_2 = Instance.new("Frame")
 Body_2.Name = "Body"
 Body_2.Parent = MainMenuWindow
@@ -673,7 +746,7 @@ local AntiVoidButton     = makeToolBtn("AntiVoidButton",     "Anti-Void",     7)
 
 -- Anti-Void começa verde (ativo)
 AntiVoidButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
-
+NeverFailButton.BackgroundColor3 = Color3.new(0, 0.74902, 0)
 AntiVoidButton.MouseButton1Down:Connect(function()
     antiVoidEnabled = not antiVoidEnabled
     AntiVoidButton.BackgroundColor3 = antiVoidEnabled and Color3.new(0, 0.74902, 0) or Color3.new(0.74902, 0, 0)
@@ -684,6 +757,7 @@ AntiVoidButton.MouseButton1Down:Connect(function()
             antiVoidConnection:Disconnect()
             antiVoidConnection = nil
         end
+        removeFakePlatform()
     end
 end)
 
@@ -1060,7 +1134,7 @@ local playertoggle    = false
 local bestpctoggle    = false
 local exitstoggle     = false
 local beastcamtoggle  = false
-local neverfailtoggle    = false
+local neverfailtoggle    = true
 local autointeracttoggle = false
 local autoplaytoggle     = false
 
@@ -1131,8 +1205,9 @@ end)
 -- ================================================
 -- HOTKEYS
 -- ================================================
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
+local hotkeyConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
+    if scriptKilled then return end
 
     if input.KeyCode == Enum.KeyCode.B then
         if ESPMenuWindow.Visible or ToolsMenuWindow.Visible then
@@ -1174,7 +1249,57 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
+-- ================================================
+-- BOTÃO FECHAR TUDO (X vermelho no canto do ícone)
+-- ================================================
 
+
+local KillButton = Instance.new("TextButton")
+KillButton.Name = "KillButton"
+KillButton.Parent = MenusTabFrame
+KillButton.AnchorPoint = Vector2.new(0, 1)
+-- Canto superior esquerdo do ícone
+KillButton.Position = UDim2.new(0, -19, 1, 105)
+KillButton.Size = UDim2.new(0, 22, 0, 22)
+KillButton.BackgroundColor3 = Color3.fromRGB(220, 0, 0)
+KillButton.BorderSizePixel = 0
+KillButton.ZIndex = 20
+KillButton.Text = "X"
+KillButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+KillButton.Font = Enum.Font.GothamBold
+KillButton.TextScaled = true
+Instance.new("UICorner", KillButton).CornerRadius = UDim.new(0, 4)
+
+KillButton.MouseButton1Click:Connect(function()
+    scriptKilled = true
+
+    if antiVoidConnection then
+        antiVoidConnection:Disconnect()
+        antiVoidConnection = nil
+    end
+    removeFakePlatform()
+
+    if hotkeyConnection then
+        hotkeyConnection:Disconnect()
+        hotkeyConnection = nil
+    end
+
+    speedEnabled = false
+    updateSpeed()
+
+    flyEnabled = false
+    setFly(false)
+
+    noclipEnabled = false
+    setNoclip(false)
+
+    antiVoidEnabled = false
+
+    pcall(function() FTFHAX:Destroy() end)
+    pcall(function() notifGui:Destroy() end)
+    pcall(function() speedScreenGui:Destroy() end)
+    pcall(function() MenusTabFrame:Destroy() end)
+end)
 -- ================================================
 -- FUNÇÕES ORIGINAIS (ESP, BeastCam, etc.)
 -- ================================================
@@ -1404,6 +1529,7 @@ end)
 spawn(function()
     while true do
         wait()
+        if scriptKilled then break end
         if neverfailtoggle then
             game.ReplicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
         end
@@ -1420,6 +1546,7 @@ end)
 
 spawn(function()
     while wait(3) do
+        if scriptKilled then break end
         if autoplaytoggle then
             local beast = getBeast()
             local map = game.ReplicatedStorage.CurrentMap.Value
